@@ -10,7 +10,7 @@ import platform
 # NOTE: LLAMA AND NANOGPT ARE EXPERIMENTAL PLAYERS that most people won't need to use
 # They are commented by default to avoid unnecessary dependencies such as pytorch.
 # from llama_module import BaseLlamaPlayer, LocalLlamaPlayer, LocalLoraLlamaPlayer
-# from nanogpt.nanogpt_module import NanoGptPlayer
+from nanogpt.nanogpt_module import NanoGptPlayer
 import gpt_query
 
 from typing import Optional, Tuple
@@ -24,6 +24,11 @@ class LegalMoveResponse:
     attempts: int = 0
     is_resignation: bool = False
     is_illegal_move: bool = False
+    illegal_moves_attempted: list = None  # Track actual illegal moves attempted
+
+    def __post_init__(self):
+        if self.illegal_moves_attempted is None:
+            self.illegal_moves_attempted = []
 
 
 # Define base Player class
@@ -140,6 +145,8 @@ def record_results(
     player_two_failed_to_find_legal_move: bool,
     total_moves: int,
     illegal_moves: int,
+    player_one_illegal_moves_details: list = None,
+    player_two_illegal_moves_details: list = None,
 ):
     unique_game_id = generate_unique_game_id()
 
@@ -173,6 +180,11 @@ def record_results(
             player_one_score = -1e10
             player_two_score = -1e10
 
+    # Convert illegal moves details to JSON strings for CSV storage
+    import json
+    player_one_illegal_details_json = json.dumps(player_one_illegal_moves_details or [])
+    player_two_illegal_details_json = json.dumps(player_two_illegal_moves_details or [])
+
     info_dict = {
         "game_id": unique_game_id,
         "transcript": game_state,
@@ -196,6 +208,8 @@ def record_results(
         "time_taken": total_time,
         "total_moves": total_moves,
         "illegal_moves": illegal_moves,
+        "player_one_illegal_moves_details": player_one_illegal_details_json,
+        "player_two_illegal_moves_details": player_two_illegal_details_json,
     }
 
     if RUN_FOR_ANALYSIS:
@@ -286,6 +300,7 @@ def get_legal_move(
     """Request a move from the player and ensure it's legal."""
     move_san = None
     move_uci = None
+    illegal_moves_attempted = []
 
     for attempt in range(max_attempts):
         move_san = player.get_move(
@@ -302,12 +317,22 @@ def get_legal_move(
                     move_uci=None,
                     attempts=attempt,
                     is_resignation=True,
+                    illegal_moves_attempted=illegal_moves_attempted
                 )
 
         try:
             move_uci = board.parse_san(move_san)
         except Exception as e:
             print(f"Error parsing move {move_san}: {e}")
+            # Track the illegal move with context
+            illegal_move_info = {
+                "move": move_san,
+                "error": str(e),
+                "position": f"Move {board.fullmove_number}{'w' if board.turn else 'b'}",
+                "fen": board.fen()
+            }
+            illegal_moves_attempted.append(illegal_move_info)
+            
             # check if player is gpt-3.5-turbo-instruct
             # only recording errors for gpt-3.5-turbo-instruct because it's errors are so rare
             if player.get_config()["model"] == "gpt-3.5-turbo-instruct":
@@ -318,25 +343,35 @@ def get_legal_move(
         if move_uci in board.legal_moves:
             if not move_san.startswith(" "):
                 move_san = " " + move_san
-            return LegalMoveResponse(move_san, move_uci, attempt)
+            return LegalMoveResponse(move_san, move_uci, attempt, illegal_moves_attempted=illegal_moves_attempted)
+        
         print(f"Illegal move: {move_san}")
+        # Track the illegal move with context
+        illegal_move_info = {
+            "move": move_san,
+            "error": "Move not in legal moves",
+            "position": f"Move {board.fullmove_number}{'w' if board.turn else 'b'}",
+            "fen": board.fen()
+        }
+        illegal_moves_attempted.append(illegal_move_info)
 
     # If we reach here, the player has made illegal moves for all attempts.
     print(f"{player} provided illegal moves for {max_attempts} attempts.")
     return LegalMoveResponse(
-        move_san=None, move_uci=None, attempts=max_attempts, is_illegal_move=True
+        move_san=None, move_uci=None, attempts=max_attempts, is_illegal_move=True, illegal_moves_attempted=illegal_moves_attempted
     )
 
 
 def play_turn(
     player: Player, board: chess.Board, game_state: str, player_one: bool
-) -> Tuple[str, bool, bool, int]:
+) -> Tuple[str, bool, bool, int, list]:
     result = get_legal_move(player, board, game_state, player_one, 5)
     illegal_moves = result.attempts
     move_san = result.move_san
     move_uci = result.move_uci
     resignation = result.is_resignation
     failed_to_find_legal_move = result.is_illegal_move
+    illegal_moves_attempted = result.illegal_moves_attempted
 
     if resignation:
         print(f"{player} resigned with result: {board.result()}")
@@ -349,7 +384,7 @@ def play_turn(
         game_state += move_san
         print(move_san, end=" ")
 
-    return game_state, resignation, failed_to_find_legal_move, illegal_moves
+    return game_state, resignation, failed_to_find_legal_move, illegal_moves, illegal_moves_attempted
 
 
 def initialize_game_with_random_moves(
@@ -421,6 +456,10 @@ def play_game(
 
         total_moves = 0
         illegal_moves = 0
+        
+        # Track detailed illegal moves for both players
+        player_one_illegal_moves_details = []
+        player_two_illegal_moves_details = []
 
         while not board.is_game_over():
             with open("game.txt", "w") as f:
@@ -442,8 +481,10 @@ def play_game(
                 player_one_resignation,
                 player_one_failed_to_find_legal_move,
                 illegal_moves_one,
+                illegal_moves_details_one,
             ) = play_turn(player_one, board, game_state, player_one=True)
             player_one_illegal_moves += illegal_moves_one
+            player_one_illegal_moves_details.extend(illegal_moves_details_one)
             if illegal_moves_one != 0:
                 player_one_legal_moves -= 1
             if (
@@ -458,8 +499,10 @@ def play_game(
                 player_two_resignation,
                 player_two_failed_to_find_legal_move,
                 illegal_moves_two,
+                illegal_moves_details_two,
             ) = play_turn(player_two, board, game_state, player_one=False)
             player_two_illegal_moves += illegal_moves_two
+            player_two_illegal_moves_details.extend(illegal_moves_details_two)
             if illegal_moves_two != 0:
                 player_two_legal_moves -= 1
             if (
@@ -496,6 +539,8 @@ def play_game(
             player_two_failed_to_find_legal_move,
             total_moves,
             illegal_moves,
+            player_one_illegal_moves_details,
+            player_two_illegal_moves_details,
         )
     if isinstance(player_one, StockfishPlayer):
         player_one.close()
@@ -505,24 +550,23 @@ def play_game(
         # print(game_state)
 
 
-NANOGPT = False
+NANOGPT = True
 RUN_FOR_ANALYSIS = True
 MAX_MOVES = 1000
 if NANOGPT:
     MAX_MOVES = 89  # Due to nanogpt max input length of 1024
 recording_file = "logs/determine.csv"  # default recording file. Because we are using list [player_ones], recording_file is overwritten
-player_ones = ["stockfish_16layers_ckpt_no_optimizer.pt"]
-player_ones = ["gpt-3.5-turbo-instruct"]
+player_ones = ["small-24-ckpt.pt"]
 player_two_recording_name = "stockfish_sweep"
 if __name__ == "__main__":
     for player in player_ones:
         player_one_recording_name = player
-        for i in range(11):
-            num_games = 100
-            player_one = GPTPlayer(model=player)
-            # player_one = GPTPlayer(model="gpt-4")
+        for i in range(1, 2):  # Changed to test just Stockfish level 1
+            num_games = 1  # Changed from 5 to 1 for quick test
+            # player_one = GPTPlayer(model=player)
+            # player_one = GPTPlayer(model="gpt-4") 
             # player_one = StockfishPlayer(skill_level=-1, play_time=0.1)
-            # player_one = NanoGptPlayer(model_name=player_one_recording_name)
+            player_one = NanoGptPlayer(model_name=player_one_recording_name)
             player_two = StockfishPlayer(skill_level=i, play_time=0.1)
             # player_two = GPTPlayer(model="gpt-4")
             # player_two = GPTPlayer(model="gpt-3.5-turbo-instruct")
