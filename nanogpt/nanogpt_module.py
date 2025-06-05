@@ -85,9 +85,9 @@ class NanoGptPlayer:
         )
         top_k = 200  # retain only the top_k most likely tokens, clamp others to have 0 probability
         seed = 1337
-        device = "cuda"  # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1', etc.
+        device = "cpu"  # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1', etc.
         # device = "cpu"
-        dtype = "float16"  # 'float32' or 'bfloat16' or 'float16'
+        dtype = "float32"  # 'float32' or 'bfloat16' or 'float16' - using float32 for CPU
         compile = False  # use PyTorch 2.0 to compile the model to be faster
         exec(
             open(f"{BASE_DIR}configurator.py").read()
@@ -175,14 +175,20 @@ class NanoGptPlayer:
 
         # Remove ["stockfish elo xxx"]\n["stockfish elo xxx"]\n\n from game_state
         # nanogpt was trained only on pgn transcripts
-        game_state = game_state.split("\n\n")[1].strip()
+        if "\n\n" in game_state:
+            game_state = game_state.split("\n\n")[1].strip()
+        else:
+            # If no double newline, just use the game state as is
+            game_state = game_state.strip()
 
         # Nanogpt was trained on pgn transcripts of this format: 1.e4 e5 2.Nf3 (not 1. e4 e5 2. Nf3)
         # I did this to save on tokens
         # We remove the space after the move number to match the training data
         game_state = re.sub(r"(\d+\.) ", r"\1", game_state)
 
-        game_state = ";" + game_state
+        # Ensure game_state starts with the delimiter token
+        if not game_state.startswith(";"):
+            game_state = ";" + game_state
 
         # print("game_state", game_state)
 
