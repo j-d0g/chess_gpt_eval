@@ -17,7 +17,7 @@ def generate_summary():
     print(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print()
     
-    results_dir = Path('data/analysis/stockfish_analysis')
+    results_dir = Path('data/analysis')
     
     # Load all summary files from June 26-27 (the complete analysis)
     model_data = {}

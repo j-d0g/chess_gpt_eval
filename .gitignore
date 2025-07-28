@@ -95,3 +95,7 @@ logs/*
 # Large model files
 *.pt
 src/models/nanogpt/out/*.pt
+
+# Data directory (use download_data.py to fetch from HuggingFace)
+data/
+!data/.gitkeep

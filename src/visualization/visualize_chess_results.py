@@ -35,17 +35,17 @@ def result_to_score(result):
 
 # Read all CSV files in the desired order
 log_files = [
-    'logs/small-8-600k_iters_pt_vs_stockfish_sweep.csv',
-    'logs/small-16-600k_iters_pt_vs_stockfish_sweep.csv', 
-    'logs/small-24-600k_iters_pt_vs_stockfish_sweep.csv',
-    'logs/small-36-600k_iters_pt_vs_stockfish_sweep.csv',
-    'logs/medium-12-600k_iters_pt_vs_stockfish_sweep.csv',
-    'logs/medium-16-600k_iters_pt_vs_stockfish_sweep.csv',
-    'logs/large-16-600k_iters_pt_vs_stockfish_sweep.csv',
-    'logs/adam_lichess_8layers_pt_vs_stockfish_sweep.csv',
-    'logs/adam_stockfish_8layers_pt_vs_stockfish_sweep.csv',
-    'logs/adam_lichess_16layers_pt_vs_stockfish_sweep.csv',
-    'logs/adam_stockfish_16layers_pt_vs_stockfish_sweep.csv'
+    'data/games/small-8-600k_iters_pt_vs_stockfish_sweep.csv',
+    'data/games/small-16-600k_iters_pt_vs_stockfish_sweep.csv', 
+    'data/games/small-24-600k_iters_pt_vs_stockfish_sweep.csv',
+    'data/games/small-36-600k_iters_pt_vs_stockfish_sweep.csv',
+    'data/games/medium-12-600k_iters_pt_vs_stockfish_sweep.csv',
+    'data/games/medium-16-600k_iters_pt_vs_stockfish_sweep.csv',
+    'data/games/large-16-600k_iters_pt_vs_stockfish_sweep.csv',
+    'data/games/adam_lichess_8layers_pt_vs_stockfish_sweep.csv',
+    'data/games/adam_stockfish_8layers_pt_vs_stockfish_sweep.csv',
+    'data/games/adam_lichess_16layers_pt_vs_stockfish_sweep.csv',
+    'data/games/adam_stockfish_16layers_pt_vs_stockfish_sweep.csv'
 ]
 
 # Dictionary to store dataframes (using OrderedDict to preserve order)
@@ -59,21 +59,7 @@ for log_file in log_files:
             print(f"Skipping {log_file} - insufficient data points")
             continue
             
-        # Special handling for large-16 file which is missing header
-        if 'large-16-600k_iters_pt_vs_stockfish_sweep.csv' in log_file:
-            # Define the expected column names based on other files
-            column_names = [
-                'game_id', 'transcript', 'result', 'player_one', 'player_two', 
-                'player_one_time', 'player_two_time', 'player_one_score', 'player_two_score',
-                'player_one_illegal_moves', 'player_two_illegal_moves', 'player_one_legal_moves', 
-                'player_two_legal_moves', 'player_one_resignation', 'player_two_resignation',
-                'player_one_failed_to_find_legal_move', 'player_two_failed_to_find_legal_move',
-                'game_title', 'number_of_moves', 'time_taken', 'total_moves', 'illegal_moves',
-                'player_one_illegal_moves_details', 'player_two_illegal_moves_details'
-            ]
-            df = pd.read_csv(log_file, header=None, names=column_names)
-        else:
-            df = pd.read_csv(log_file)
+        df = pd.read_csv(log_file)
             
         model_name = log_file.split('/')[-1].replace('_vs_stockfish_sweep.csv', '').replace('-600k_iters_pt', '')
         model_names.append(model_name)
@@ -93,6 +79,14 @@ for log_file in log_files:
         all_data[model_name] = df
         print(f"Loaded {len(df)} games from {model_name}")
 
+# Check if any data was loaded
+if not all_data:
+    print("ERROR: No data files were found or loaded successfully!")
+    print("Please check that the CSV files exist in the data/games/ directory.")
+    exit(1)
+
+print(f"\nSuccessfully loaded data from {len(all_data)} model(s)")
+
 # Create figure with multiple subplots (4x4 layout for comprehensive analysis)
 fig = plt.figure(figsize=(20, 24))
 
@@ -103,19 +97,27 @@ ax1 = plt.subplot(4, 4, 1)
 model_avg_scores = {}
 for model, df in all_data.items():
     if 'stockfish_level' in df.columns:
-        level_means = df.groupby('stockfish_level')['score'].mean()
+        # Only consider levels 0-9 for average calculation
+        level_means = df[df['stockfish_level'] <= 9].groupby('stockfish_level')['score'].mean()
         model_avg_scores[model] = level_means.mean()
     else:
         model_avg_scores[model] = df['score'].mean()
+
+# Use a colormap with distinct colors
+colors = plt.cm.tab10(np.linspace(0, 1, len(model_avg_scores)))
+color_idx = 0
 
 # Plot in order of average score (best to worst)
 for model in sorted(model_avg_scores.keys(), key=lambda x: model_avg_scores[x], reverse=True):
     df = all_data[model]
     if 'stockfish_level' in df.columns:
-        level_stats = df.groupby('stockfish_level')['score'].agg(['mean', 'count']).reset_index()
+        # Filter to only show levels 0-9
+        level_stats = df[df['stockfish_level'] <= 9].groupby('stockfish_level')['score'].agg(['mean', 'count']).reset_index()
         ax1.plot(level_stats['stockfish_level'], level_stats['mean'], 
                 marker='o', linewidth=2, markersize=8,
-                label=model.replace('_pt', '').replace('_', ' '))
+                label=model.replace('_pt', '').replace('_', ' '),
+                color=colors[color_idx])
+        color_idx += 1
 
 ax1.set_xlabel('Stockfish Level')
 ax1.set_ylabel('Average Score (including draws as 0.5)')
@@ -133,12 +135,14 @@ ax2 = plt.subplot(4, 4, 2)
 avg_scores = []
 for model, df in all_data.items():
     avg_score = df['score'].mean()
-    total_games = len(df)
     avg_scores.append({
         'Model': model.replace('_pt', '').replace('_', ' '),
-        'Avg Score': avg_score,
-        'Games': total_games
+        'Avg Score': avg_score
     })
+
+if not avg_scores:
+    print("ERROR: No valid score data found!")
+    exit(1)
 
 scores_df = pd.DataFrame(avg_scores).sort_values('Avg Score')
 bars = ax2.bar(range(len(scores_df)), scores_df['Avg Score'], 
@@ -147,11 +151,7 @@ ax2.set_xticks(range(len(scores_df)))
 ax2.set_xticklabels(scores_df['Model'], rotation=60, ha='right', fontsize=8)
 ax2.set_ylabel('Average Score Rate')
 ax2.set_ylim(0, 1.0)
-ax2.set_title('Average Score Rate (Normalized Win Rate)')
-
-# Add score labels on bars
-for i, (score, games) in enumerate(zip(scores_df['Avg Score'], scores_df['Games'])):
-    ax2.text(i, score + 0.01, f'{score:.3f}\n({games} games)', ha='center', fontsize=9)
+ax2.set_title('Average Score Rate')
 
 # 3. Game length distribution (all games)
 ax3 = plt.subplot(4, 4, 3)
@@ -170,7 +170,8 @@ if all_game_lengths:
     for model, df in all_data.items():
         clean_model_name = model.replace('_pt', '').replace('_', ' ')
         if 'stockfish_level' in df.columns:
-            level_means = df.groupby('stockfish_level')['score'].mean()
+            # Only consider levels 0-9 for consistent ordering
+            level_means = df[df['stockfish_level'] <= 9].groupby('stockfish_level')['score'].mean()
             model_avg_scores[clean_model_name] = level_means.mean()
         else:
             model_avg_scores[clean_model_name] = df['score'].mean()
@@ -203,7 +204,8 @@ if won_game_lengths:
     for model, df in all_data.items():
         clean_model_name = model.replace('_pt', '').replace('_', ' ')
         if 'stockfish_level' in df.columns:
-            level_means = df.groupby('stockfish_level')['score'].mean()
+            # Only consider levels 0-9 for consistent ordering
+            level_means = df[df['stockfish_level'] <= 9].groupby('stockfish_level')['score'].mean()
             model_avg_scores[clean_model_name] = level_means.mean()
         else:
             model_avg_scores[clean_model_name] = df['score'].mean()
@@ -270,7 +272,8 @@ if heatmap_data:
         clean_model_name = model.replace('_pt', '').replace('_', ' ')
         if 'stockfish_level' in df.columns:
             # Calculate average score for each level, then average those
-            level_means = df.groupby('stockfish_level')['score'].mean()
+            # Only consider levels 0-9 for consistent ordering
+            level_means = df[df['stockfish_level'] <= 9].groupby('stockfish_level')['score'].mean()
             # Only include levels where we have data
             model_avg_scores[clean_model_name] = level_means.mean()
         else:
@@ -323,7 +326,8 @@ if sample_count_data:
     for model, df in all_data.items():
         clean_model_name = model.replace('_pt', '').replace('_', ' ')
         if 'stockfish_level' in df.columns:
-            level_means = df.groupby('stockfish_level')['score'].mean()
+            # Only consider levels 0-9 for consistent ordering
+            level_means = df[df['stockfish_level'] <= 9].groupby('stockfish_level')['score'].mean()
             model_avg_scores[clean_model_name] = level_means.mean()
         else:
             model_avg_scores[clean_model_name] = df['score'].mean()
@@ -343,13 +347,13 @@ ax8 = plt.subplot(4, 4, 8)
 win_rate_by_length = []
 for model, df in all_data.items():
     if 'number_of_moves' in df.columns:
-        # Create game length bins
-        df_clean = df.dropna(subset=['number_of_moves', 'score'])
+        # Create game length bins with new structure
+        df_clean = df.dropna(subset=['number_of_moves', 'score']).copy()
         df_clean['length_bin'] = pd.cut(df_clean['number_of_moves'], 
-                                       bins=[0, 20, 40, 60, 80, 100, float('inf')], 
-                                       labels=['0-20', '21-40', '41-60', '61-80', '81-100', '100+'])
+                                       bins=[0, 40, 50, 60, 70, 80, 90, 100, float('inf')], 
+                                       labels=['<40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '100+'])
         
-        for bin_name in ['0-20', '21-40', '41-60', '61-80', '81-100', '100+']:
+        for bin_name in ['<40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '100+']:
             bin_games = df_clean[df_clean['length_bin'] == bin_name]
             if len(bin_games) > 0:
                 win_rate = bin_games['score'].mean()
@@ -369,7 +373,8 @@ if win_rate_by_length:
     for model, df in all_data.items():
         clean_model_name = model.replace('_pt', '').replace('_', ' ')
         if 'stockfish_level' in df.columns:
-            level_means = df.groupby('stockfish_level')['score'].mean()
+            # Only consider levels 0-9 for consistent ordering
+            level_means = df[df['stockfish_level'] <= 9].groupby('stockfish_level')['score'].mean()
             model_avg_scores[clean_model_name] = level_means.mean()
         else:
             model_avg_scores[clean_model_name] = df['score'].mean()
@@ -437,6 +442,13 @@ for clean_name in model_order:
 move_bins = list(range(10, 101, 10))  # 10-20, 20-30, ..., 90-100
 colors = plt.cm.tab10(np.linspace(0, 1, len(raw_model_order)))
 
+# Create move labels first
+move_labels = []
+for j in range(len(move_bins)-1):
+    start_move = move_bins[j]
+    end_move = move_bins[j+1]
+    move_labels.append(f"{start_move}-{end_move}")
+
 for i, model_name in enumerate(raw_model_order[:6]):  # Top 6 models for clarity
     if model_name in all_data:
         df = all_data[model_name]
@@ -444,7 +456,6 @@ for i, model_name in enumerate(raw_model_order[:6]):  # Top 6 models for clarity
         
         if len(df_clean) > 0:
             illegal_rates = []
-            move_labels = []
             
             for j in range(len(move_bins)-1):
                 start_move = move_bins[j]
@@ -455,26 +466,25 @@ for i, model_name in enumerate(raw_model_order[:6]):  # Top 6 models for clarity
                     (df_clean['number_of_moves'] < end_move)
                 ]
                 
-                if len(games_in_range) > 50:  # Only include bins with sufficient data
+                if len(games_in_range) > 30:  # Only include bins with sufficient data
                     total_illegal = games_in_range['player_one_illegal_moves'].sum()
                     total_moves = games_in_range['number_of_moves'].sum()
                     illegal_rate = (total_illegal / total_moves * 100) if total_moves > 0 else 0
                     
                     illegal_rates.append(illegal_rate)
-                    if i == 0:  # Only add labels once
-                        move_labels.append(f"{start_move}-{end_move}")
             
-            if illegal_rates:
+            if illegal_rates and len(illegal_rates) == len(move_labels):
                 x_pos = range(len(illegal_rates))
-                plt.plot(x_pos, illegal_rates, marker='o', label=model_name.replace('_', ' '), 
+                ax10.plot(x_pos, illegal_rates, marker='o', label=model_name.replace('_', ' '), 
                         linewidth=2, color=colors[i])
 
-plt.xlabel('Game Length Bins (moves)')
-plt.ylabel('Illegal Move Rate (%)')
-plt.title('Illegal Move Rate vs Game Length\n(Do models deteriorate in longer games?)')
-plt.xticks(range(len(move_labels)), move_labels, rotation=45)
-plt.legend(fontsize=8)
-plt.grid(True, alpha=0.3)
+ax10.set_xlabel('Game Length Bins (moves)')
+ax10.set_ylabel('Illegal Move Rate (%)')
+ax10.set_title('Illegal Move Rate vs Game Length\n(Do models deteriorate in longer games?)')
+ax10.set_xticks(range(len(move_labels)))
+ax10.set_xticklabels(move_labels, rotation=45)
+ax10.legend(fontsize=8)
+ax10.grid(True, alpha=0.3)
 
 # 11. Average Game Length vs Stockfish Level
 ax11 = plt.subplot(4, 4, 11)
@@ -502,46 +512,183 @@ plt.title('Game Length vs Opponent Strength\n(Do stronger opponents lead to long
 plt.legend(fontsize=8)
 plt.grid(True, alpha=0.3)
 
-# 12. Illegal Move Rate vs Stockfish Level
+# 12. Win Rate vs Game Length Line Graph (Clearer Bins)
 ax12 = plt.subplot(4, 4, 12)
 
-# Calculate illegal move rate for each model at each Stockfish level
+# Create clearer line graph with new bin structure
 for i, model_name in enumerate(raw_model_order[:6]):  # Top 6 models
     if model_name in all_data:
         df = all_data[model_name]
-        if 'stockfish_level' in df.columns and 'player_one_illegal_moves' in df.columns:
-            df_clean = df.dropna(subset=['stockfish_level', 'player_one_illegal_moves', 'number_of_moves'])
+        if 'number_of_moves' in df.columns and 'score' in df.columns:
+            df_clean = df.dropna(subset=['number_of_moves', 'score'])
             
-            if len(df_clean) > 0:
-                level_stats = df_clean.groupby('stockfish_level').agg({
-                    'player_one_illegal_moves': 'sum',
-                    'number_of_moves': 'sum',
-                    'game_id': 'count'  # Count games
-                }).reset_index()
-                
-                # Only include levels with sufficient games
-                level_stats = level_stats[level_stats['game_id'] >= 50]
-                
-                if len(level_stats) > 0:
-                    # Calculate illegal move rate per move
-                    level_stats['illegal_rate'] = (level_stats['player_one_illegal_moves'] / 
-                                                  level_stats['number_of_moves'] * 100)
-                    
-                    plt.plot(level_stats['stockfish_level'], level_stats['illegal_rate'], 
-                            marker='o', label=model_name.replace('_', ' '), 
-                            linewidth=2, color=colors[i])
+            # Use new bin structure with clear labels
+            bins = [0, 40, 50, 60, 70, 80, 90, 100, float('inf')]
+            bin_centers = [35, 45, 55, 65, 75, 85, 95, 110]
+            bin_labels = ['<40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '100+']
+            
+            df_clean = df_clean.copy()
+            df_clean['length_bin'] = pd.cut(df_clean['number_of_moves'], bins=bins, labels=bin_labels)
+            
+            win_rates = []
+            valid_centers = []
+            valid_labels = []
+            
+            for j, (bin_label, center) in enumerate(zip(bin_labels, bin_centers)):
+                bin_games = df_clean[df_clean['length_bin'] == bin_label]
+                if len(bin_games) > 30:  # Only include bins with sufficient data
+                    win_rate = bin_games['score'].mean()
+                    win_rates.append(win_rate)
+                    valid_centers.append(center)
+                    valid_labels.append(bin_label)
+            
+            if win_rates:
+                ax12.plot(valid_centers, win_rates, marker='o', 
+                         label=model_name.replace('_pt', '').replace('_', ' '), 
+                         linewidth=2, color=colors[i], markersize=6)
 
-plt.xlabel('Stockfish Level')
-plt.ylabel('Illegal Move Rate (%)')
-plt.title('Illegal Move Rate vs Opponent Strength\n(Do models make more mistakes vs stronger opponents?)')
-plt.legend(fontsize=8)
-plt.grid(True, alpha=0.3)
+ax12.set_xlabel('Game Length Bins')
+ax12.set_ylabel('Win Rate')
+ax12.set_title('Win Rate vs Game Length Bins\n(Performance across different game durations)')
+ax12.legend(fontsize=8)
+ax12.grid(True, alpha=0.3)
+ax12.set_ylim(0, 1)
 
-# 13. Win Rate vs Average Game Length (Scatter Plot)
+# Set x-axis labels for the bins
+bin_labels_display = ['<40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '100+']
+bin_centers_display = [35, 45, 55, 65, 75, 85, 95, 110]
+ax12.set_xticks(bin_centers_display)
+ax12.set_xticklabels(bin_labels_display, rotation=45)
+
+# 13. Reverse Cumulative Win Rate Line Graph (>X moves)
 ax13 = plt.subplot(4, 4, 13)
 
+# Create reverse cumulative line graph
+for i, model_name in enumerate(raw_model_order[:6]):  # Top 6 models
+    if model_name in all_data:
+        df = all_data[model_name]
+        if 'number_of_moves' in df.columns and 'score' in df.columns:
+            df_clean = df.dropna(subset=['number_of_moves', 'score'])
+            
+            # Create reverse cumulative data points
+            reverse_thresholds = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+            win_rates = []
+            valid_thresholds = []
+            
+            for threshold in reverse_thresholds:
+                games_over_threshold = df_clean[df_clean['number_of_moves'] > threshold]
+                if len(games_over_threshold) > 50:  # Only include with sufficient data
+                    win_rate = games_over_threshold['score'].mean()
+                    win_rates.append(win_rate)
+                    valid_thresholds.append(threshold)
+            
+            if len(win_rates) > 2:  # Need at least 3 points for a meaningful line
+                ax13.plot(valid_thresholds, win_rates, marker='o', 
+                         label=model_name.replace('_pt', '').replace('_', ' '), 
+                         linewidth=2, color=colors[i], markersize=6)
+
+ax13.set_xlabel('Minimum Game Length (moves)')
+ax13.set_ylabel('Win Rate')
+ax13.set_title('Win Rate in Games Longer Than X Moves\n(Performance in extended games)')
+ax13.legend(fontsize=8)
+ax13.grid(True, alpha=0.3)
+ax13.set_ylim(0, 1)
+
+# 14. Reverse Cumulative Win Rate (>X moves) - NEW VISUALIZATION
+ax14 = plt.subplot(4, 4, 14)
+
+reverse_cumulative_win_rate = []
+for model, df in all_data.items():
+    if 'number_of_moves' in df.columns and 'score' in df.columns:
+        df_clean = df.dropna(subset=['number_of_moves', 'score'])
+        
+        # Create reverse cumulative bins (games longer than X moves)
+        reverse_bins = [0, 20, 40, 60, 80, 100]
+        
+        for min_moves in reverse_bins:
+            games_over_threshold = df_clean[df_clean['number_of_moves'] > min_moves]
+            if len(games_over_threshold) > 0:
+                win_rate = games_over_threshold['score'].mean()
+                reverse_cumulative_win_rate.append({
+                    'Model': model.replace('_pt', '').replace('_', ' '),
+                    'Min Moves': f'>{min_moves}',
+                    'Win Rate': win_rate,
+                    'Games': len(games_over_threshold)
+                })
+
+if reverse_cumulative_win_rate:
+    reverse_df = pd.DataFrame(reverse_cumulative_win_rate)
+    reverse_pivot = reverse_df.pivot(index='Model', columns='Min Moves', values='Win Rate')
+    
+    # Order by overall performance (using same ordering as other heatmaps)
+    model_avg_scores = {}
+    for model, df in all_data.items():
+        clean_model_name = model.replace('_pt', '').replace('_', ' ')
+        if 'stockfish_level' in df.columns:
+            level_means = df[df['stockfish_level'] <= 9].groupby('stockfish_level')['score'].mean()
+            model_avg_scores[clean_model_name] = level_means.mean()
+        else:
+            model_avg_scores[clean_model_name] = df['score'].mean()
+    
+    sorted_models = sorted(model_avg_scores.keys(), key=lambda x: model_avg_scores[x], reverse=True)
+    reverse_pivot = reverse_pivot.reindex([m for m in sorted_models if m in reverse_pivot.index])
+    
+    # Reorder columns to show in logical order
+    col_order = ['>0', '>20', '>40', '>60', '>80', '>100']
+    reverse_pivot = reverse_pivot[[col for col in col_order if col in reverse_pivot.columns]]
+    
+    sns.heatmap(reverse_pivot, annot=True, fmt='.2f', cmap='RdYlGn', ax=ax14, 
+                vmin=0, vmax=1, cbar_kws={'label': 'Win Rate'}, annot_kws={'fontsize': 8})
+    ax14.set_title('Win Rate by Game Length (Reverse Cumulative)\n(Performance in games longer than X moves)')
+
+# 15. Win Rate by Game Length (Cumulative) - NEW VISUALIZATION
+ax15 = plt.subplot(4, 4, 15)
+cumulative_win_rate_by_length = []
+
+for model, df in all_data.items():
+    if 'number_of_moves' in df.columns and 'score' in df.columns:
+        df_clean = df.dropna(subset=['number_of_moves', 'score'])
+        
+        # Create cumulative bins in correct order
+        cumulative_bins = [40, 50, 60, 70, 80, 90, 100]
+         
+        for max_moves in cumulative_bins:
+            games_under_threshold = df_clean[df_clean['number_of_moves'] < max_moves]
+            if len(games_under_threshold) > 0:
+                win_rate = games_under_threshold['score'].mean()
+                cumulative_win_rate_by_length.append({
+                    'Model': model.replace('_pt', '').replace('_', ' '),
+                    'Max Moves': f'<{max_moves}',
+                    'Win Rate': win_rate,
+                    'Games': len(games_under_threshold)
+                })
+
+if cumulative_win_rate_by_length:
+    cumulative_df = pd.DataFrame(cumulative_win_rate_by_length)
+    cumulative_pivot = cumulative_df.pivot(index='Model', columns='Max Moves', values='Win Rate')
+    
+    # Order by overall performance (using same ordering as other heatmaps)
+    model_avg_scores = {}
+    for model, df in all_data.items():
+        clean_model_name = model.replace('_pt', '').replace('_', ' ')
+        if 'stockfish_level' in df.columns:
+            level_means = df[df['stockfish_level'] <= 9].groupby('stockfish_level')['score'].mean()
+            model_avg_scores[clean_model_name] = level_means.mean()
+        else:
+            model_avg_scores[clean_model_name] = df['score'].mean()
+    
+    sorted_models = sorted(model_avg_scores.keys(), key=lambda x: model_avg_scores[x], reverse=True)
+    cumulative_pivot = cumulative_pivot.reindex([m for m in sorted_models if m in cumulative_pivot.index])
+    
+    sns.heatmap(cumulative_pivot, annot=True, fmt='.2f', cmap='RdYlGn', ax=ax15, 
+                vmin=0, vmax=1, cbar_kws={'label': 'Win Rate'}, annot_kws={'fontsize': 8})
+    ax15.set_title('Win Rate by Game Length (Cumulative)')
+
+# 16. Model Performance Scatter Plot (Fixed)
+ax16 = plt.subplot(4, 4, 16)
+
 scatter_data = []
-for model_name in raw_model_order:
+for i, model_name in enumerate(raw_model_order):
     if model_name in all_data:
         df = all_data[model_name]
         if 'number_of_moves' in df.columns and 'score' in df.columns:
@@ -553,133 +700,111 @@ for model_name in raw_model_order:
                 scatter_data.append({
                     'Model': model_name.replace('_pt', '').replace('_', ' '),
                     'Avg Game Length': avg_game_length,
-                    'Win Rate': win_rate
+                    'Win Rate': win_rate,
+                    'Color': colors[i % len(colors)]
                 })
 
 if scatter_data:
     scatter_df = pd.DataFrame(scatter_data)
-    plt.scatter(scatter_df['Avg Game Length'], scatter_df['Win Rate'], s=100, alpha=0.7)
     
-    # Add model labels
+    # Use distinct colors for each model
+    for i, row in scatter_df.iterrows():
+        ax16.scatter(row['Avg Game Length'], row['Win Rate'], 
+                    s=150, c=[row['Color']], alpha=0.8, edgecolors='black', linewidth=1,
+                    label=row['Model'])
+    
+    # Add simple model labels without overlap issues
     for _, row in scatter_df.iterrows():
-        plt.annotate(row['Model'], (row['Avg Game Length'], row['Win Rate']), 
-                    xytext=(5, 5), textcoords='offset points', fontsize=8)
+        ax16.annotate(row['Model'], (row['Avg Game Length'], row['Win Rate']), 
+                     xytext=(3, 3), textcoords='offset points', fontsize=7,
+                     bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.8, edgecolor='none'))
     
-    plt.xlabel('Average Game Length (moves)')
-    plt.ylabel('Win Rate')
-    plt.title('Win Rate vs Average Game Length\n(Do longer games correlate with better/worse performance?)')
-    plt.grid(True, alpha=0.3)
-
-# 14. Win Rate vs Stockfish Level (Line Plot for Clarity)
-ax14 = plt.subplot(4, 4, 14)
-
-# Create a cleaner line plot showing win rate trends
-for i, model_name in enumerate(raw_model_order[:6]):  # Top 6 models
-    if model_name in all_data:
-        df = all_data[model_name]
-        if 'stockfish_level' in df.columns and 'score' in df.columns:
-            df_clean = df.dropna(subset=['stockfish_level', 'score'])
-            
-            if len(df_clean) > 0:
-                level_stats = df_clean.groupby('stockfish_level')['score'].agg(['mean', 'count']).reset_index()
-                # Only include levels with sufficient games
-                level_stats = level_stats[level_stats['count'] >= 50]
-                
-                if len(level_stats) > 0:
-                    plt.plot(level_stats['stockfish_level'], level_stats['mean'], 
-                            marker='o', label=model_name.replace('_', ' '), 
-                            linewidth=2, color=colors[i])
-
-plt.xlabel('Stockfish Level')
-plt.ylabel('Win Rate')
-plt.title('Win Rate vs Stockfish Level\n(Performance degradation with opponent strength)')
-plt.legend(fontsize=8)
-plt.grid(True, alpha=0.3)
-plt.ylim(0, 1)
-
-# 15. Performance Consistency (Standard Deviation across Stockfish levels)
-ax15 = plt.subplot(4, 4, 15)
-
-consistency_stats = []
-for model_name in raw_model_order:
-    if model_name in all_data:
-        df = all_data[model_name]
-        if 'stockfish_level' in df.columns and 'score' in df.columns:
-            df_clean = df.dropna(subset=['stockfish_level', 'score'])
-            
-            if len(df_clean) > 0:
-                level_means = df_clean.groupby('stockfish_level')['score'].mean()
-                # Only include levels with sufficient data
-                level_means = level_means[level_means.index <= 9]  # Standard levels 0-9
-                
-                if len(level_means) >= 5:  # Need at least 5 levels for meaningful std
-                    consistency = level_means.std()  # Lower std = more consistent
-                    avg_performance = level_means.mean()
-                    consistency_stats.append({
-                        'Model': model_name.replace('_pt', '').replace('_', ' '),
-                        'Performance Std': consistency,
-                        'Avg Performance': avg_performance
-                    })
-
-if consistency_stats:
-    consist_df = pd.DataFrame(consistency_stats).sort_values('Performance Std')
-    bars = plt.bar(range(len(consist_df)), consist_df['Performance Std'],
-                   color=plt.cm.Blues(np.linspace(0.3, 0.9, len(consist_df))))
-    plt.xticks(range(len(consist_df)), consist_df['Model'], rotation=60, ha='right', fontsize=8)
-    plt.ylabel('Performance Standard Deviation')
-    plt.title('Performance Consistency\n(Lower = more consistent across Stockfish levels)')
+    ax16.set_xlabel('Average Game Length (moves)')
+    ax16.set_ylabel('Win Rate')
+    ax16.set_title('Model Performance Overview\n(Win Rate vs Game Duration)')
+    ax16.grid(True, alpha=0.3)
+    ax16.set_ylim(0, 1)
     
-    # Add values on bars
-    for i, std in enumerate(consist_df['Performance Std']):
-        plt.text(i, std + 0.005, f'{std:.3f}', ha='center', fontsize=9)
-
-# 16. Early Game vs Late Game Performance Comparison
-ax16 = plt.subplot(4, 4, 16)
-
-early_late_stats = []
-for model_name in raw_model_order:
-    if model_name in all_data:
-        df = all_data[model_name]
-        if 'number_of_moves' in df.columns and 'score' in df.columns:
-            df_clean = df.dropna(subset=['number_of_moves', 'score'])
-            
-            if len(df_clean) > 0:
-                early_games = df_clean[df_clean['number_of_moves'] <= 40]
-                late_games = df_clean[df_clean['number_of_moves'] > 60]
-                
-                if len(early_games) > 50 and len(late_games) > 50:
-                    early_win_rate = early_games['score'].mean()
-                    late_win_rate = late_games['score'].mean()
-                    performance_diff = late_win_rate - early_win_rate
-                    
-                    early_late_stats.append({
-                        'Model': model_name.replace('_pt', '').replace('_', ' '),
-                        'Early Win Rate': early_win_rate,
-                        'Late Win Rate': late_win_rate,
-                        'Performance Difference': performance_diff
-                    })
-
-if early_late_stats:
-    early_late_df = pd.DataFrame(early_late_stats).sort_values('Performance Difference')
-    
-    # Create grouped bar chart
-    x = range(len(early_late_df))
-    width = 0.35
-    
-    plt.bar([i - width/2 for i in x], early_late_df['Early Win Rate'], width, 
-            label='Early Game (≤40 moves)', alpha=0.8, color='lightblue')
-    plt.bar([i + width/2 for i in x], early_late_df['Late Win Rate'], width,
-            label='Late Game (>60 moves)', alpha=0.8, color='darkblue')
-    
-    plt.xticks(x, early_late_df['Model'], rotation=60, ha='right', fontsize=8)
-    plt.ylabel('Win Rate')
-    plt.title('Early vs Late Game Performance\n(Do models perform differently in short vs long games?)')
-    plt.legend()
-    plt.grid(True, alpha=0.3)
+    # No legend needed since labels are on points
+    # ax16.legend(fontsize=6, loc='upper right')
 
 plt.tight_layout()
 plt.savefig('chess_results_analysis.png', dpi=300, bbox_inches='tight')
 plt.show()
+
+# Create a comprehensive summary statistics table
+print("\n" + "="*120)
+print("COMPREHENSIVE MODEL PERFORMANCE SUMMARY TABLE")
+print("="*120)
+
+# Prepare summary data for table
+summary_rows = []
+for model, df in all_data.items():
+    model_stats = {
+        'Model': model.replace('_pt', '').replace('_', ' '),
+        'Total Games': len(df),
+        'Avg Score': f"{df['score'].mean():.3f}",
+        'Win Rate': f"{(df['score'] == 1.0).mean():.3f}",
+        'Draw Rate': f"{(df['score'] == 0.5).mean():.3f}",
+        'Loss Rate': f"{(df['score'] == 0.0).mean():.3f}",
+        'Avg Game Length': f"{df['number_of_moves'].mean():.1f}" if 'number_of_moves' in df.columns else 'N/A',
+        'Illegal Moves/Game': f"{(df['player_one_illegal_moves'].sum() / len(df)):.2f}" if 'player_one_illegal_moves' in df.columns else 'N/A'
+    }
+    
+    # Add performance vs different Stockfish levels
+    if 'stockfish_level' in df.columns:
+        for level in [0, 3, 6, 9]:
+            level_games = df[df['stockfish_level'] == level]
+            if len(level_games) > 0:
+                model_stats[f'vs SF{level}'] = f"{level_games['score'].mean():.3f}"
+            else:
+                model_stats[f'vs SF{level}'] = 'N/A'
+    
+    summary_rows.append(model_stats)
+
+# Sort by average score (best to worst)
+summary_rows.sort(key=lambda x: float(x['Avg Score']), reverse=True)
+
+# Print table header
+headers = list(summary_rows[0].keys())
+col_widths = {}
+for header in headers:
+    col_widths[header] = max(len(header), max(len(str(row.get(header, ''))) for row in summary_rows))
+
+# Print header row
+header_row = ' | '.join(f"{header:<{col_widths[header]}}" for header in headers)
+print(header_row)
+print('-' * len(header_row))
+
+# Print data rows
+for row in summary_rows:
+    data_row = ' | '.join(f"{str(row.get(header, '')):<{col_widths[header]}}" for header in headers)
+    print(data_row)
+
+print("\n" + "="*120)
+
+# Print additional insights
+print("\nKEY INSIGHTS:")
+print("-" * 50)
+
+# Best performing model
+best_model = summary_rows[0]
+print(f"1. Best Overall Model: {best_model['Model']} (Avg Score: {best_model['Avg Score']})")
+
+# Model with fewest illegal moves
+if any('Illegal Moves/Game' in row and row['Illegal Moves/Game'] != 'N/A' for row in summary_rows):
+    cleanest_model = min([row for row in summary_rows if row['Illegal Moves/Game'] != 'N/A'], 
+                        key=lambda x: float(x['Illegal Moves/Game']))
+    print(f"2. Cleanest Play: {cleanest_model['Model']} ({cleanest_model['Illegal Moves/Game']} illegal moves/game)")
+
+# Performance drop analysis
+if 'vs SF0' in summary_rows[0] and 'vs SF9' in summary_rows[0]:
+    for row in summary_rows[:3]:  # Top 3 models
+        if row['vs SF0'] != 'N/A' and row['vs SF9'] != 'N/A':
+            drop = float(row['vs SF0']) - float(row['vs SF9'])
+            print(f"3. {row['Model']} performance drop: {drop:.3f} (SF0: {row['vs SF0']} → SF9: {row['vs SF9']})")
+
+print("\n" + "="*120)
 
 # Print summary statistics
 print("\n=== SUMMARY STATISTICS ===")

@@ -19,8 +19,8 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 
 class AdvancedChessAnalysisDashboard:
-    def __init__(self, results_dir='data/analysis/stockfish_analysis', 
-                 moves_dir='archive/analysis_old/stockfish_analysis_full'):
+    def __init__(self, results_dir='data/analysis', 
+                 moves_dir='data/analysis'):
         self.results_dir = Path(results_dir)
         self.moves_dir = Path(moves_dir)
         self.app = dash.Dash(__name__)
