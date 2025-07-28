@@ -36,7 +36,7 @@ python src/analysis/mass_stockfish_processor.py --input-dir data/games --workers
 python src/visualization/enhanced_game_results.py
 
 # Interactive analysis dashboard
-python src/visualization/enhanced_analysis_dashboard.py
+python src/visualization/interactive_dashboard.py
 ```
 
 ## 📁 **Streamlined Repository Structure**
@@ -63,7 +63,7 @@ chess_gpt_eval/
 ├── 📈 VISUALIZATION & REPORTING
 │   ├── src/visualization/
 │   │   ├── enhanced_game_results.py    # 20-plot comprehensive analysis
-│   │   ├── enhanced_analysis_dashboard.py # Interactive web dashboard
+│   │   ├── interactive_dashboard.py      # Interactive web dashboard
 │   │   ├── generate_analysis_summary.py   # Analysis summaries
 │   │   └── model_comparative_analysis.py  # Model comparisons
 │
@@ -90,12 +90,12 @@ chess_gpt_eval/
 - **Consistency metrics** and phase specialists
 - **Architecture impact analysis**
 
-### **Enhanced Analysis Dashboard**
-- **5 analysis modes**: Overview, Move Quality, Game Phases, Error Patterns, Comparative
-- **Interactive filtering** by game phase, metrics, confidence intervals
-- **Intelligent insights generation** with automated recommendations
-- **Enhanced summary tables** with 10+ metrics
-- **Real-time visualization** updates
+### **Interactive Analysis Dashboard**
+- **8 analysis modes**: Overview, Move Buckets, Performance Heatmaps, Learning Patterns, Game Phases, Move Quality, Advanced Comparisons, Position Complexity
+- **Dynamic move grouping** with configurable grouping sizes (n=1-20)
+- **Interactive filtering** by move range, centipawn loss thresholds, and model selection
+- **Statistical analysis** with t-tests, effect sizes, and significance testing
+- **Real-time visualization** updates with Plotly charts
 
 ### **Superior Analysis Capabilities**
 - **Comprehensive metrics**: 25+ statistics per game
@@ -157,8 +157,11 @@ python src/visualization/enhanced_game_results.py
 
 #### **Interactive Dashboard**
 ```bash
-# Launch web dashboard
-python src/visualization/enhanced_analysis_dashboard.py
+# Launch web dashboard (recommended)
+python launch_dashboards.py interactive
+
+# Direct execution
+python src/visualization/interactive_dashboard.py
 
 # Access at: http://localhost:8050
 ```
@@ -281,7 +284,7 @@ sbatch scripts/analysis/run_stockfish_analysis.sh data/games 64 150000
 python src/visualization/enhanced_game_results.py
 
 # 4. Launch dashboard
-python src/visualization/enhanced_analysis_dashboard.py
+python src/visualization/interactive_dashboard.py
 ```
 
 ### **Quick Model Comparison**
@@ -295,7 +298,7 @@ done
 sbatch scripts/analysis/run_stockfish_analysis.sh data/games 32 100000
 
 # View comparison
-python src/visualization/enhanced_analysis_dashboard.py
+python src/visualization/interactive_dashboard.py
 ```
 
 ## 🎯 **Model Performance Rankings**

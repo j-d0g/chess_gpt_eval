@@ -28,7 +28,7 @@ chess_gpt_eval/
 │   ├── mass_stockfish_processor.py    # Now: src/analysis/mass_stockfish_processor.py
 │   ├── stockfish_analysis.py          # Now: src/analysis/stockfish_analysis.py
 │   ├── run_mass_stockfish.sh          # Legacy batch script
-│   ├── advanced_chess_dashboard.py    # Now: src/visualization/enhanced_analysis_dashboard.py
+│   ├── advanced_chess_dashboard.py    # Now: src/visualization/interactive_dashboard.py
 │   └── chess_llm_benchmark.py         # Analysis benchmarking
 ├── scripts/                           # Legacy scripts directory
 │   ├── parallel_chess_eval.py         # Main parallel evaluation script
@@ -128,6 +128,9 @@ sbatch run_mass_stockfish.sh
 
 # 3. Create visualizations (legacy paths)
 python advanced_chess_dashboard.py --input stockfish_analysis_results/
+
+# Current approach (recommended)
+python src/visualization/interactive_dashboard.py
 
 # Monitor progress for large-scale analysis
 watch -n 30 'ls stockfish_analysis_results/ | wc -l'

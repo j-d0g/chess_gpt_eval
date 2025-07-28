@@ -1,255 +1,226 @@
-# Chess GPT Analysis Dashboard & Benchmarking Suite
+# Interactive Chess Analysis Dashboard
 
-**Interactive visualization and benchmarking guide** for chess model evaluation results. For project overview and data generation, see the [main README](../README.md).
+**Interactive web-based dashboard** for comprehensive chess model evaluation results. For project overview and data generation, see the [main README](../README.md).
 
-A comprehensive analysis and benchmarking framework for evaluating chess-playing language models (NanoGPT and similar architectures).
+An advanced analysis dashboard featuring 8 analysis modes, dynamic filtering, and deep granular insights for chess-playing language models.
 
 ## Overview
 
-This suite provides deep insights into chess LLM performance through:
-- **Performance Analysis**: Win rates, Elo estimation, and performance vs different Stockfish levels
-- **Game Analysis**: Move quality, game phases, opening/endgame performance
-- **Error Analysis**: Illegal move patterns, error recovery, and failure modes
-- **Stockfish Integration**: Deep position analysis with centipawn loss and blunder detection
-- **Standardized Benchmarks**: Comprehensive test suite for chess LLMs
-- **Interactive Dashboards**: Web-based visualizations for exploring results
+The Interactive Chess Analysis Dashboard (`src/visualization/interactive_dashboard.py`) provides deep insights into chess LLM performance through:
 
-## Components
+- **8 Analysis Modes**: Overview, Move Buckets, Performance Heatmaps, Learning Patterns, Game Phases, Move Quality, Advanced Comparisons, and Position Complexity
+- **Dynamic Move Grouping**: Configurable move grouping (n=1 to 20) with real-time performance trends
+- **Interactive Filtering**: Move range filtering, centipawn loss thresholds, and model selection
+- **Statistical Analysis**: T-tests, effect size calculations, and significance testing
+- **Real-time Visualization**: Plotly-based interactive charts and heatmaps
 
-### 1. Advanced Chess Dashboard (`advanced_chess_dashboard.py`)
+## Quick Start
 
-The main analysis dashboard that creates comprehensive visualizations from game logs.
+### Launch the Dashboard
+```bash
+# Using the launcher (recommended)
+python launch_dashboards.py interactive
 
-**Features:**
-- Performance overview with Elo estimation
-- Game length and phase analysis
-- Illegal move pattern detection
-- Opening performance analysis
-- Model architecture comparison
-- Interactive Plotly dashboards
+# Direct execution
+python src/visualization/interactive_dashboard.py
 
-**Usage:**
+# Access at: http://localhost:8050
+```
+
+### Prerequisites
+- Analysis data in `data/analysis/` directory with `*_summary_*.csv` and `*_moves_*.csv` files
+- Python dependencies from `requirements.txt`
+
+## Dashboard Features
+
+### 🎯 Move Bucket Analysis (Core Feature)
+- **Dynamic Move Grouping**: Group moves by n=1 to 20 for trend analysis
+- **Move Bucket Heatmap**: Performance across 6 game phases (early opening, late opening, early middle, late middle, early end, late end)
+- **Variance Analysis**: Compare individual vs grouped move performance
+- **Centipawn Loss Distribution**: Histograms by move buckets with customizable thresholds
+
+### 🔥 Performance Heatmaps
+- **Multi-Metric Heatmap**: CP loss, blunders, mistakes, accuracy across game phases
+- **Move Quality Heatmap**: Best/good/suboptimal move distribution by model
+
+### 📈 Learning Patterns
+- **Performance Evolution**: Rolling average trends over games
+- **Consistency Analysis**: Performance vs consistency scatter plots with coefficient of variation
+
+### 🎲 Game Phase Deep-Dive
+- **Phase Performance Comparison**: Opening, middlegame, endgame analysis
+- **Complexity vs Performance**: Position complexity impact by game phase
+
+### ⚡ Move Quality Analysis
+- **Quality Distribution**: Percentage of best, good, suboptimal, mistake, blunder moves
+- **Quality Score Correlation**: Move quality scores vs centipawn loss
+
+### 🧪 Advanced Comparisons
+- **Statistical Significance Testing**: T-tests between models with p-values and effect sizes
+- **Performance Rankings**: Automated statistical comparisons
+
+### 🎨 Position Complexity Analysis
+- **Complexity Scatter Plots**: Position complexity vs performance correlation
+- **Complexity Distribution**: Histogram analysis of position difficulty
+
+### 📊 Overview Dashboard
+- **Performance Summary**: Box plots, move quality bars, and key metrics
+- **Enhanced Summary Table**: Comprehensive statistics with 10+ metrics per model
+
+## Interactive Controls
+
+### Model Selection
+- **Multi-select dropdown**: Choose from available models with clean names
+- **Automatic filtering**: Only models with valid data are shown
+
+### Dynamic Filtering
+- **Move Range Slider**: Filter analysis to specific move ranges (1-100)
+- **Move Grouping Size**: Adjust grouping from individual moves (n=1) to larger buckets (n=20)
+- **Centipawn Loss Threshold**: Set maximum CP loss for analysis focus
+
+### Analysis Type Selection
+8 radio button options for different analysis modes:
+- Overview Dashboard
+- Move Bucket Analysis  
+- Performance Heatmaps
+- Learning Patterns
+- Game Phase Deep-Dive
+- Move Quality Analysis
+- Advanced Comparisons
+- Position Complexity
+
+## Data Requirements
+
+### Input Files
+```bash
+data/analysis/
+├── {model}_summary_{timestamp}.csv     # Game-level statistics
+└── {model}_moves_{timestamp}.csv       # Move-by-move analysis (sampled to 50k moves)
+```
+
+### Required Columns
+
+**Summary Files:**
+- `average_centipawn_loss`, `blunders`, `mistakes`, `inaccuracies`
+- `best_moves`, `good_moves`, `suboptimal_moves`
+- `opening_accuracy`, `middlegame_accuracy`, `endgame_accuracy`
+
+**Moves Files:**
+- `move_number`, `move_quality`, `centipawn_loss`, `game_phase`
+- `position_complexity`, `move_quality_score`
+
+## Usage Examples
+
+### Basic Analysis
 ```python
-from advanced_chess_dashboard import ChessAnalysisDashboard
+from src.visualization.interactive_dashboard import AdvancedChessAnalysisDashboard
 
 # Initialize dashboard
-dashboard = ChessAnalysisDashboard()
+dashboard = AdvancedChessAnalysisDashboard()
 
-# Load game data
-dashboard.load_data()
-
-# Create comprehensive visualizations
-dashboard.create_comprehensive_dashboard()
-
-# Export data for mechanistic interpretability
-dashboard.export_for_mechanistic_interpretability("output_dir")
+# Run dashboard (opens in browser)
+dashboard.run(port=8050)
 ```
 
-### 2. Stockfish Analysis (`stockfish_analysis.py`)
-
-Deep game analysis using the Stockfish chess engine.
-
-**Features:**
-- Move-by-move analysis with centipawn loss
-- Blunder, mistake, and inaccuracy detection
-- Position complexity scoring
-- Critical moment identification
-- Game phase performance breakdown
-
-**Usage:**
+### Custom Data Directories
 ```python
-from stockfish_analysis import StockfishAnalyzer
-
-# Initialize analyzer
-analyzer = StockfishAnalyzer(depth=20, threads=4)
-
-# Analyze single game
-game_analysis = analyzer.analyze_game(pgn_string, game_id)
-
-# Batch analysis
-analysis_df = analyzer.batch_analyze_games(
-    games_df, 
-    'output.csv',
-    num_processes=4
+# Custom data paths
+dashboard = AdvancedChessAnalysisDashboard(
+    results_dir='custom/path/analysis',
+    moves_dir='custom/path/analysis'
 )
-
-# Create visualizations
-analyzer.create_analysis_visualizations(analysis_df)
+dashboard.run()
 ```
 
-### 3. Chess LLM Benchmark (`chess_llm_benchmark.py`)
+## Performance Features
 
-Standardized benchmark suite for evaluating chess language models.
+### Data Loading
+- **Intelligent Sampling**: Loads first 50k moves per model for performance
+- **Data Validation**: Checks for required columns before loading
+- **Error Handling**: Graceful handling of missing or corrupted files
 
-**Features:**
-- 10 categories of chess tasks (tactics, strategy, endgames, etc.)
-- 4 difficulty levels (easy to expert)
-- Automated Elo estimation
-- Comprehensive performance reports
-- Leaderboard generation
+### Statistical Analysis
+- **Move Bucket Statistics**: Performance across 6 predefined game phases
+- **Enhanced Statistics**: Calculates 20+ metrics per model
+- **Real-time Computation**: Dynamic recalculation based on filters
 
-**Usage:**
+### Visualization Performance
+- **Efficient Plotting**: Optimized Plotly charts with hover details
+- **Responsive UI**: Real-time updates based on control changes
+- **Memory Management**: Smart data sampling for large datasets
+
+## Dashboard Architecture
+
+### Class Structure
 ```python
-from chess_llm_benchmark import ChessLLMBenchmark
-
-# Initialize benchmark
-benchmark = ChessLLMBenchmark()
-
-# Export benchmark tasks
-benchmark.export_benchmark_tasks()
-
-# Evaluate model
-performance = benchmark.evaluate_model(model_name, model_responses)
-
-# Create report
-benchmark.create_benchmark_report([performance1, performance2, ...])
+class AdvancedChessAnalysisDashboard:
+    def load_data()                           # Load and validate analysis data
+    def calculate_enhanced_stats()            # Compute model statistics
+    def setup_layout()                        # Define dashboard UI
+    def setup_callbacks()                     # Handle interactivity
+    
+    # Analysis Functions (8 modes)
+    def create_move_bucket_analysis()         # Core move grouping feature
+    def create_performance_heatmaps()         # Multi-metric heatmaps
+    def create_learning_patterns()            # Trend analysis
+    def create_game_phase_analysis()          # Phase-specific insights
+    def create_move_quality_analysis()        # Move classification
+    def create_advanced_comparisons()         # Statistical testing
+    def create_position_complexity_analysis() # Complexity correlation
+    def create_overview_dashboard()           # Summary view
 ```
 
-## Installation
+### Callback System
+- **Real-time Updates**: All visualizations update dynamically
+- **Input Validation**: Handles missing data gracefully
+- **Performance Optimization**: Efficient data filtering and processing
 
-1. Install required dependencies:
+## Troubleshooting
+
+### Common Issues
+
+**Dashboard won't start:**
 ```bash
-pip install pandas numpy matplotlib seaborn plotly chess python-chess tqdm
+# Check data availability
+ls data/analysis/*_summary_*.csv
+ls data/analysis/*_moves_*.csv
 ```
 
-2. Install Stockfish (for deep analysis):
+**Missing models:**
+- Ensure CSV files follow naming convention: `{model}_vs_stockfish_*`
+- Check that files contain required columns
+
+**Performance issues:**
+- Dashboard samples moves data (50k per model) for performance
+- Reduce move range or number of selected models if needed
+
+### Data Format Issues
 ```bash
-# Ubuntu/Debian
-sudo apt-get install stockfish
-
-# macOS
-brew install stockfish
-
-# Or download from https://stockfishchess.org/download/
+# Check file format
+head -5 data/analysis/model_summary_timestamp.csv
+head -5 data/analysis/model_moves_timestamp.csv
 ```
-
-## Data Format
-
-The tools expect CSV files with the following columns:
-- `game_id`: Unique game identifier
-- `transcript`: PGN format game moves (e.g., "1.e4 e5 2.Nf3 Nc6...")
-- `result`: Game result ("1-0", "0-1", "1/2-1/2")
-- `player_one`: Model name
-- `player_two`: Opponent (e.g., "Stockfish 5")
-- `player_one_illegal_moves`: Count of illegal moves
-- `number_of_moves`: Total moves in game
-- Additional columns as needed
-
-## Visualization Examples
-
-### Performance Overview
-- Model comparison across Stockfish levels
-- Elo rating estimates
-- Win/draw/loss distributions
-- Architecture impact analysis
-
-### Game Analysis
-- Move quality over time
-- Opening repertoire analysis
-- Time pressure performance
-- Critical position identification
-
-### Error Analysis
-- Illegal move patterns by game phase
-- Error recovery rates
-- Consecutive error analysis
-- Error type distribution
 
 ## Advanced Features
 
-### 1. Mechanistic Interpretability Export
-Export game states for training linear probes:
-```python
-dashboard.export_for_mechanistic_interpretability("output_dir")
+### Move Bucket Analysis Details
+The core feature provides granular analysis of move performance:
+
+1. **Dynamic Grouping**: Groups moves by configurable size (1-20)
+2. **Performance Trends**: Shows how grouping affects variance
+3. **Phase Mapping**: Maps moves to 6 game phases automatically
+4. **Statistical Depth**: Provides mean, variance, and distribution analysis
+
+### Integration with Analysis Pipeline
+The dashboard automatically loads data from the Stockfish analysis pipeline:
+```bash
+# Generate data first
+python src/analysis/mass_stockfish_processor.py --input-dir data/games
+
+# Then launch dashboard
+python src/visualization/interactive_dashboard.py
 ```
 
-### 2. Custom Benchmark Tasks
-Add your own benchmark positions:
-```python
-benchmark.tasks.append(BenchmarkTask(
-    task_id='custom_001',
-    category='tactics',
-    difficulty='medium',
-    position_fen='...',
-    correct_moves=['Nxf7'],
-    description='Custom tactical puzzle',
-    evaluation_criteria={'move_found': 1.0}
-))
-```
+---
 
-### 3. Stockfish Annotations for Specific Games
-Annotate games with detailed engine analysis:
-```python
-# Analyze specific games
-game_ids = ['game_001', 'game_002']
-annotated_games = analyzer.batch_analyze_games(
-    games_df[games_df['game_id'].isin(game_ids)],
-    'annotated_games.csv'
-)
-```
-
-## Output Files
-
-The suite generates various output files:
-
-### Dashboard Outputs
-- `performance_overview_[timestamp].png`: Main performance visualizations
-- `game_analysis_[timestamp].png`: Detailed game analysis
-- `error_analysis_[timestamp].png`: Error pattern analysis
-- `opening_analysis_[timestamp].png`: Opening performance
-- `interactive_dashboard_[timestamp].html`: Interactive web dashboard
-- `comparison_report_[timestamp].md`: Detailed markdown report
-
-### Stockfish Analysis Outputs
-- `stockfish_analysis_results.csv`: Summary statistics
-- `stockfish_analysis_results_detailed.json`: Move-by-move analysis
-- `centipawn_loss_distribution.png`: CPL visualization
-- `phase_performance.png`: Performance by game phase
-
-### Benchmark Outputs
-- `benchmark_tasks.json`: All benchmark positions
-- `overall_comparison_[timestamp].png`: Model comparison
-- `leaderboard_[timestamp].png`: Visual leaderboard
-- `detailed_report_[timestamp].md`: Comprehensive report
-- `raw_results_[timestamp].json`: Raw benchmark data
-
-## Best Practices
-
-1. **Data Quality**: Ensure game transcripts are properly formatted PGN
-2. **Sample Size**: Use at least 1000 games per model for reliable statistics
-3. **Stockfish Analysis**: Adjust depth based on time/accuracy tradeoff
-4. **Benchmarking**: Run benchmarks multiple times to account for variance
-
-## Future Enhancements
-
-Potential areas for expansion:
-- Real-time game analysis during play
-- Integration with chess GUI (lichess/chess.com style)
-- Neural network probe training pipeline
-- Automated hyperparameter optimization
-- Multi-model ensemble analysis
-- Opening book generation from model games
-- Endgame tablebase comparison
-- Style analysis (aggressive/positional/tactical)
-
-## Citation
-
-If you use this analysis suite in your research, please cite:
-```
-@software{chess_gpt_analysis,
-  title={Chess GPT Analysis Dashboard & Benchmarking Suite},
-  author={Your Name},
-  year={2024},
-  url={https://github.com/yourusername/chess_gpt_eval}
-}
-```
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- Inspired by Adam Karvonen's Chess-GPT work
-- Uses the python-chess library for game handling
-- Stockfish chess engine for position analysis 
+**Ready to explore your chess model performance with advanced interactive analysis!** 🚀 
