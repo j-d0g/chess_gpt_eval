@@ -6,13 +6,14 @@
 
 This guide covers CSF3-specific optimizations, legacy file paths, and cluster-specific configurations.
 
-### **Legacy File Paths (Pre-restructuring)**
-If working with older checkouts or legacy scripts:
+### **Current vs Legacy File Paths**
 ```bash
-# Legacy game evaluation (older file structure)
-python scripts/parallel_chess_eval.py --model large-24-600K_iters.pt --games 1000
+# Current structured approach (recommended)
+python src/models/main.py large-16 0 9 1000
+sbatch scripts/run_stockfish_analysis.sh data/games 64 150000
 
-# Legacy Stockfish analysis (root directory files)
+# Legacy file paths (if using older checkpoints)
+python scripts/parallel_chess_eval.py --model large-24-600K_iters.pt --games 1000
 sbatch run_mass_stockfish.sh
 python mass_stockfish_processor.py --max-games 2 --workers 4
 ```
@@ -130,7 +131,7 @@ sbatch run_mass_stockfish.sh
 python advanced_chess_dashboard.py --input stockfish_analysis_results/
 
 # Current approach (recommended)
-python src/visualization/interactive_dashboard.py
+python launch_dashboards.py interactive
 
 # Monitor progress for large-scale analysis
 watch -n 30 'ls stockfish_analysis_results/ | wc -l'

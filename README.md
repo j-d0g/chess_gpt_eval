@@ -14,17 +14,14 @@ Analyze recorded games with Stockfish engine to extract move quality, centipawn 
 
 ### **Workflow 1: Game Playing**
 ```bash
-# Run game evaluation (recommended)
-sbatch scripts/game_playing/run_game_evaluation.sh large-16 0 9 1000
-
 # Direct execution
-python src/game_engine/main.py large-16 0 10 1000
+python src/models/main.py large-16 0 10 1000
 ```
 
 ### **Workflow 2: Stockfish Analysis**
 ```bash
 # Run comprehensive analysis (recommended)
-sbatch scripts/analysis/run_stockfish_analysis.sh data/games 64 150000
+sbatch scripts/run_stockfish_analysis.sh data/games 64 150000
 
 # Direct execution
 python src/analysis/mass_stockfish_processor.py --input-dir data/games --workers 64
@@ -32,10 +29,13 @@ python src/analysis/mass_stockfish_processor.py --input-dir data/games --workers
 
 ### **View Results**
 ```bash
-# Enhanced game results visualization
-python src/visualization/enhanced_game_results.py
+# Chess results visualization
+python src/visualization/visualize_chess_results.py
 
-# Interactive analysis dashboard
+# Interactive analysis dashboard (recommended)
+python launch_dashboards.py interactive
+
+# Or direct execution
 python src/visualization/interactive_dashboard.py
 ```
 
@@ -46,26 +46,24 @@ chess_gpt_eval/
 ├── 🎮 WORKFLOW 1: GAME PLAYING
 │   ├── src/models/
 │   │   ├── main.py                     # Main game playing engine
-│   │   ├── nanogpt/                    # NanoGPT model implementation
-│   │   └── llama/                      # LLaMA model implementation
-│   ├── scripts/game_playing/
-│   │   └── run_game_evaluation.sh      # Unified game playing script
+│   │   └── nanogpt/                    # NanoGPT model implementation
 │   └── data/games/                     # Game result CSV files
 │
 ├── 📊 WORKFLOW 2: STOCKFISH ANALYSIS
 │   ├── src/analysis/
 │   │   ├── mass_stockfish_processor.py # Batch analysis processor
-│   │   └── stockfish_analysis.py       # Single game analysis
-│   ├── scripts/analysis/
-│   │   └── run_stockfish_analysis.sh   # Unified analysis script
+│   │   ├── stockfish_analysis.py       # Single game analysis
+│   │   └── generate_analysis_summary.py # Analysis summaries
+│   ├── scripts/
+│   │   └── run_stockfish_analysis.sh   # Stockfish analysis script
 │   └── data/analysis/                  # Analysis output files
 │
 ├── 📈 VISUALIZATION & REPORTING
 │   ├── src/visualization/
-│   │   ├── enhanced_game_results.py    # 20-plot comprehensive analysis
-│   │   ├── interactive_dashboard.py      # Interactive web dashboard
-│   │   ├── generate_analysis_summary.py   # Analysis summaries
-│   │   └── model_comparative_analysis.py  # Model comparisons
+│   │   ├── visualize_chess_results.py  # Chess results visualization
+│   │   └── interactive_dashboard.py    # Interactive web dashboard
+│   └── scripts/
+│       └── launch_analysis_dashboard.sh # Dashboard launcher script
 │
 ├── 🔧 INFRASTRUCTURE
 │   ├── engines/                        # Stockfish engine binaries
@@ -76,17 +74,17 @@ chess_gpt_eval/
 └── 🗂️ ARCHIVE
     ├── experimental/                   # Experimental scripts
     ├── legacy/                         # Legacy implementations
-    └── outputs/                        # Generated output files
+    └── visualization/                  # Archived visualization tools
 ```
 
 ## 🌟 **Enhanced Features**
 
-### **Enhanced Game Results Analysis**
-- **20 comprehensive visualizations** (vs. previous 16)
+### **Chess Results Analysis**
+- **Comprehensive visualizations** of model performance
 - **Elo estimation** based on Stockfish performance
 - **Opening analysis** with categorization
 - **Time pressure analysis** (performance degradation)
-- **Move-bucket advantage heatmaps** (NEW!)
+- **Move-bucket performance analysis**
 - **Consistency metrics** and phase specialists
 - **Architecture impact analysis**
 
@@ -111,11 +109,11 @@ chess_gpt_eval/
 
 #### **Basic Usage**
 ```bash
-# Play 1000 games per Stockfish level (0-9)
-sbatch scripts/game_playing/run_game_evaluation.sh large-16 0 9 1000
+# Play games directly (adjust parameters as needed)
+python src/models/main.py large-16 0 9 1000
 
-# Quick test (100 games, levels 0-2)
-sbatch scripts/game_playing/run_game_evaluation.sh small-8 0 3 100
+# Quick test (100 games, levels 0-2) 
+python src/models/main.py small-8 0 3 100
 ```
 
 #### **Output Files**
@@ -131,7 +129,7 @@ data/games/
 #### **Basic Usage**
 ```bash
 # Comprehensive analysis (all games, 64 workers)
-sbatch scripts/analysis/run_stockfish_analysis.sh data/games 64 150000
+sbatch scripts/run_stockfish_analysis.sh data/games 64 150000
 
 # Quick analysis (4 workers, 1000 nodes)
 python src/analysis/mass_stockfish_processor.py --workers 4 --nodes 1000 --max-games 100
@@ -147,12 +145,12 @@ data/analysis/
 
 ### **Visualization & Analysis**
 
-#### **Enhanced Game Results**
+#### **Chess Results Visualization**
 ```bash
-# Generate 20-plot comprehensive analysis
-python src/visualization/enhanced_game_results.py
+# Generate comprehensive analysis plots
+python src/visualization/visualize_chess_results.py
 
-# Output: enhanced_chess_analysis.png (24x30 inches, 300 DPI)
+# Output: Analysis plots and visualizations
 ```
 
 #### **Interactive Dashboard**
@@ -194,22 +192,22 @@ python src/visualization/interactive_dashboard.py
 
 ## 🎯 **Key Improvements**
 
-### **From Previous Version**
+### **Current Features**
 - ✅ **Streamlined structure** - Clear separation of two workflows
-- ✅ **Enhanced visualizations** - 20 plots vs 16, with superior analysis
+- ✅ **Comprehensive visualizations** - Multiple analysis plots and charts
 - ✅ **Elo estimation** - Proper chess rating estimates
 - ✅ **Opening analysis** - Categorized opening performance
-- ✅ **Interactive dashboard** - 5 analysis modes with intelligent insights
+- ✅ **Interactive dashboard** - 8 analysis modes with advanced filtering
 - ✅ **Consistency metrics** - Performance variance analysis
-- ✅ **Move-bucket heatmaps** - Performance by game phase
-- ✅ **Unified entry scripts** - Simple workflow execution
-- ✅ **Intelligent insights** - Automated recommendations
+- ✅ **Move-bucket analysis** - Dynamic performance grouping
+- ✅ **Statistical testing** - T-tests and significance analysis
+- ✅ **Real-time filtering** - Interactive data exploration
 
-### **Archived Features**
+### **Archived Components**
 - 🗂️ **Experimental scripts** moved to `archive/experimental/`
 - 🗂️ **Legacy implementations** moved to `archive/legacy/`
+- 🗂️ **Legacy visualization tools** moved to `archive/visualization/`
 - 🗂️ **Generated outputs** moved to `archive/outputs/`
-- 🗂️ **Utility notebooks** moved to `archive/legacy/utils/`
 
 ## 🚀 **Performance Expectations**
 
@@ -251,7 +249,7 @@ pip install -r requirements.txt
 ### **First Run**
 ```bash
 # Test game playing
-sbatch scripts/game_playing/run_game_evaluation.sh small-8 0 3 10
+python src/models/main.py small-8 0 3 10
 
 # Test analysis  
 python src/analysis/mass_stockfish_processor.py --max-games 5 --workers 2
@@ -275,13 +273,13 @@ python src/analysis/mass_stockfish_processor.py --max-games 5 --workers 2
 ### **Complete Analysis Pipeline**
     ```bash
 # 1. Generate games
-sbatch scripts/game_playing/run_game_evaluation.sh large-16 0 9 1000
+python src/models/main.py large-16 0 9 1000
 
 # 2. Analyze games
-sbatch scripts/analysis/run_stockfish_analysis.sh data/games 64 150000
+sbatch scripts/run_stockfish_analysis.sh data/games 64 150000
 
 # 3. Generate visualizations
-python src/visualization/enhanced_game_results.py
+python src/visualization/visualize_chess_results.py
 
 # 4. Launch dashboard
 python src/visualization/interactive_dashboard.py
@@ -289,13 +287,13 @@ python src/visualization/interactive_dashboard.py
 
 ### **Quick Model Comparison**
 ```bash
-# Compare multiple models
+# Generate games for multiple models
 for model in small-8 medium-12 large-16; do
-    sbatch scripts/game_playing/run_game_evaluation.sh $model 0 5 500
+    python src/models/main.py $model 0 5 500
 done
 
 # Analyze all results
-sbatch scripts/analysis/run_stockfish_analysis.sh data/games 32 100000
+sbatch scripts/run_stockfish_analysis.sh data/games 32 100000
 
 # View comparison
 python src/visualization/interactive_dashboard.py
