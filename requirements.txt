@@ -1,7 +1,22 @@
-pandas
-numpy
-matplotlib
-plotly
-chess
-tqdm
-huggingface_hub
+# Core data science libraries
+pandas>=2.0.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+scipy>=1.10.0
+
+# Chess and game analysis
+python-chess>=1.999
+tqdm>=4.65.0
+
+# Interactive dashboards and visualization
+plotly>=5.14.0
+dash>=2.10.0
+
+# Data download
+huggingface_hub>=0.16.0
+
+# Optional: For older/legacy code (if needed)
+# openai==0.28.0
+# tiktoken==0.4.0  
+# tenacity==8.2.3

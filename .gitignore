@@ -77,7 +77,14 @@ results/*.err
 logs/*.csv
 !logs/openings.csv
 
-# Archive
+# Generated images and visualizations
+*.png
+*.jpg
+*.jpeg
+*.pdf
+*.svg
+
+# Archive directory (21GB of legacy/experimental code)
 archive/
 
 # API keys and sensitive data
@@ -92,6 +99,7 @@ gpt_inputs/api_key.txt
 gpt_test_output.txt
 /nanogpt/activations/*
 logs/*
+
 # Large model files
 *.pt
 src/models/nanogpt/out/*.pt
