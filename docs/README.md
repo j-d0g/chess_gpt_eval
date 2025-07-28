@@ -1,100 +1,274 @@
-**Overview**
+# Chess GPT Evaluation on CSF3
 
-There has recently been some buzz about the ability of GPT-3.5-turbo-instruct's chess playing ability. I wanted to take a more rigourous look and created this repo. With it, you can play two models against each other, whether that's LLM vs Stockfish, LLM vs LLM, or Stockfish vs Stockfish. The primary goal is to test and record the performance of these players against one another in various configurations. Illegal moves, resignations, and game states are all tracked and recorded for later analysis. Per move, a model gets 5 illegal moves before forced resignation of the round.
+A comprehensive system for evaluating chess language models against Stockfish on the University of Manchester's CSF3 cluster, with optimized parallel processing, batch inference, and **comprehensive Stockfish analysis**.
 
-**Results**
+## 🚀 Quick Start
 
-GPT-3.5-turbo instruct does well in 150 games against various Stockfish levels and 30 games against GPT-4. Most of gpt-4's losses were due to illegal moves, so it may be possible to come up with a prompt to have gpt-4 correct illegal moves and improve its score.
+### **Game Evaluation**
+```bash
+# Test the parallel setup (20 games)
+sbatch scripts/test_parallel_setup.sh
 
-![](./gpt-3.5-turbo-instruct-win-rate.png)
-
-gpt-3.5-turbo-instruct's illegal move rate is under 0.1% over 8205 moves (possibly 0%, I had insufficient recording and state validation going on during my run... TODO), and the longest game had 147 moves.
-
-`analysis.ipynb` results:
-```
-total moves: 8205, total illegal moves: 5 or less
-Ratio of Player One's Illegal Moves to Total Moves: 0.0006 or less
-Minimum Moves: 15
-Maximum Moves: 147
-Median Moves: 45.0
-Standard Deviation of Moves: 21.90
+# Run evaluation (1000 games)
+python scripts/parallel_chess_eval.py --model large-24-600K_iters.pt --games 1000
 ```
 
-All results were gathered on Stockfish 16 with 0.1 seconds per move on a 2023 M1 Mac. I ran a Stockfish benchmark using `% stockfish bench 1024 16 26 default depth nnue 1>/dev/null 2>stockfish_M1Mac.bench` and stored the output in `logs/stockfish_M1Mac.bench`.
+### **🆕 Stockfish Analysis (NEW)**
+```bash
+# Analyze all games with comprehensive Stockfish annotations
+sbatch run_mass_stockfish.sh
 
-**Setup**
+# Quick test (2 games)
+python mass_stockfish_processor.py --max-games 2 --workers 4
 
-- Install the necessary libraries in `requirements.txt` using pip.
-- Copy paste your OpenAI API key in `gpt_inputs/api_key.txt`.
-- If you plan on using StockfishPlayer, ensure Stockfish is installed on your system and accessible from your system path. On Mac, this is done with `brew install stockfish`. On Linux, you can use `apt install stockfish`.
-
-**Game Recording**
-
-- record_results(): This function logs the game's outcome, various statistics, and game states into a CSV file.
-- The recording file is set based on `player_one_recording_name` and `player_two_recording_name`, which are set at the bottom of `main.py`. For example, if `player_one_recording_name` is `gpt-4` and `player_two_recording_name` is `stockfish_sweep`, the recording file would be `logs/gpt-4_vs_stockfish_sweep.csv`.
-- There is always a transcript of the most recent GPT API call and response in `gpt_outputs/transcript.txt`.
-
-**How to Use**
-
-- Set the desired players by instantiating them at the bottom of `main.py`.
-- As an example, to pit `gpt-3.5-turbo-instruct` against Stockfish level 5 in a match of 15 rounds, do the following before running the program:
-
-```
-num_games = 15
-player_one = GPTPlayer(model="gpt-3.5-turbo-instruct")
-player_two = StockfishPlayer(skill_level=5, play_time=0.1)
-play_game(player_one, player_two, num_games)
+# Custom analysis
+python mass_stockfish_processor.py --input-dir logs --workers 32 --nodes 150000
 ```
 
-- For analysis and graphing purposes, you can check out the contents of `analysis.ipynb`.
-
-**Other Capabilities**
-
-There is the ability to run other models using OpenRouter or Hugging Face. However, I've found that other models, like Llama2-70b chat won't provide formatted moves, and Llama2-70b base will hallucinate illegal moves. In addition, it seems like gpt-4 consistently loses to gpt-3.5-turbo-instruct, usually due to forced resignation after 5 illegal moves.
-
-You can use Llama and NanoGPT models. For more information, see the READMEs contained in `local_llama/` and `nanogpt/`.
-
-In the dataset_generation branch, I played a distribution of Stockfish vs Stockfish levels against each other to create a dataset to train a NanoGPT model on chess games, which worked to create a ~1200 ELO chess LLM.
-
-**Stockfish to ELO**
-
-Stockfish provides this estimate of [Stockfish level to ELO](https://github.com/official-stockfish/Stockfish/commit/a08b8d4):
+## 📁 Repository Structure
 
 ```
-   # PLAYER             :  RATING  ERROR  POINTS  PLAYED   (%)
-   1 master-skill-19    :  3191.1   40.4   940.0    1707    55
-   2 master-skill-18    :  3170.3   39.3  1343.0    2519    53
-   3 master-skill-17    :  3141.3   37.8  2282.0    4422    52
-   4 master-skill-16    :  3111.2   37.1  2773.0    5423    51
-   5 master-skill-15    :  3069.5   37.2  2728.5    5386    51
-   6 master-skill-14    :  3024.8   36.1  2702.0    5339    51
-   7 master-skill-13    :  2972.9   35.4  2645.5    5263    50
-   8 master-skill-12    :  2923.1   35.0  2653.5    5165    51
-   9 master-skill-11    :  2855.5   33.6  2524.0    5081    50
-  10 master-skill-10    :  2788.3   32.0  2724.5    5511    49
-  11 stash-bot-v25.0    :  2744.0   31.5  1952.5    3840    51
-  12 master-skill-9     :  2702.8   30.5  2670.0    5018    53
-  13 master-skill-8     :  2596.2   28.5  2669.5    4975    54
-  14 stash-bot-v21.0    :  2561.2   30.0  1338.0    3366    40
-  15 master-skill-7     :  2499.5   28.5  1934.0    4178    46
-  16 stash-bot-v20.0    :  2452.6   27.7  1606.5    3378    48
-  17 stash-bot-v19.0    :  2425.3   26.7  1787.0    3365    53
-  18 master-skill-6     :  2363.2   26.4  2510.5    4379    57
-  19 stash-bot-v17.0    :  2280.7   25.4  2209.0    4378    50
-  20 master-skill-5     :  2203.7   25.3  2859.5    5422    53
-  21 stash-bot-v15.3    :  2200.0   25.4  1757.0    4383    40
-  22 stash-bot-v14      :  2145.9   25.5  2890.0    5167    56
-  23 stash-bot-v13      :  2042.7   25.8  2263.5    4363    52
-  24 stash-bot-v12      :  1963.4   25.8  1769.5    4210    42
-  25 master-skill-4     :  1922.9   25.9  2690.0    5399    50
-  26 stash-bot-v11      :  1873.0   26.3  2203.5    4335    51
-  27 stash-bot-v10      :  1783.8   27.8  2568.5    4301    60
-  28 master-skill-3     :  1742.3   27.8  1909.5    4439    43
-  29 master-skill-2     :  1608.4   29.4  2064.5    4389    47
-  30 stash-bot-v9       :  1582.6   30.2  2130.0    4230    50
-  31 master-skill-1     :  1467.6   31.3  2015.5    4244    47
-  32 stash-bot-v8       :  1452.8   31.5  1953.5    3780    52
-  33 master-skill-0     :  1320.1   32.9   651.5    2083    31
+chess_gpt_eval/
+├── 🆕 STOCKFISH ANALYSIS SYSTEM
+│   ├── mass_stockfish_processor.py    # High-performance batch Stockfish analyzer
+│   ├── stockfish_analysis.py          # Detailed single-game analysis
+│   ├── run_mass_stockfish.sh          # SLURM batch processing script
+│   ├── advanced_chess_dashboard.py    # Comprehensive visualization dashboard
+│   ├── chess_llm_benchmark.py         # Standardized benchmarking suite
+│   └── setup_stockfish.md             # Stockfish installation guide
+├── docs/                              # Documentation
+│   ├── README_CSF3_Setup.md           # CSF3 setup guide
+│   ├── PARALLEL_SETUP_SUMMARY.md      # Complete parallel processing guide
+│   ├── CSF3_Resource_Limits.md        # Resource limits and optimization
+│   └── GPU_Performance_Analysis.md    # Performance optimization guide
+├── scripts/                           # Executable scripts
+│   ├── parallel_chess_eval.py         # Main parallel evaluation script
+│   ├── test_parallel_setup.sh         # Test script for parallel setup
+│   └── gpu_performance_test.py        # GPU performance diagnostics
+├── nanogpt/                           # NanoGPT model code
+│   ├── nanogpt_batch_module.py        # Batch-enabled inference module
+│   ├── model.py                       # GPT model implementation
+│   └── out/                           # Model checkpoints
+├── logs/                              # Game CSV files (input data)
+├── stockfish_analysis_results/        # 🆕 Comprehensive analysis outputs
+├── stockfish/                         # Stockfish engine installation
+├── results/                           # Test outputs and job results
+└── requirements.txt                   # Python dependencies
 ```
 
-It's difficult to make an exact comparison with my results due to differences in hardware and run time, but this can give a ballpark estimate. Stockfish ELO estimates were obtained with 120 seconds of run time, while I used 0.1 seconds. From my testing at lower Stockfish skill levels, 0.01 seconds vs 1 second makes relatively little difference.
+## 🎯 Key Features
+
+### **🆕 Comprehensive Stockfish Analysis**
+- **Move-by-Move Analysis**: Centipawn loss, blunders, mistakes, inaccuracies
+- **Position Evaluation**: Material imbalance, complexity scoring, game phases
+- **Best Move Analysis**: Principal variations, alternative lines
+- **High Performance**: 140 workers, 150K nodes per position
+- **Multiple Outputs**: JSON (detailed), CSV (summary + moves), visualizations
+
+### **Parallel Game Evaluation**
+- **Batch GPU Inference**: Process 16-32 chess positions simultaneously
+- **CPU Parallelization**: 11 workers handle game logic and Stockfish
+- **Queue-based Architecture**: Efficient communication between GPU and CPU workers
+
+### **CSF3 Optimization**
+- **Resource Discovery**: Automatically determined optimal configurations
+- **Memory Efficiency**: Works within CSF3 resource limits
+- **Array Jobs**: Scale to multiple concurrent evaluations
+
+## 🔧 Usage
+
+### **🆕 Stockfish Batch Analysis**
+
+#### **Full Analysis (80K+ games)**
+```bash
+# Submit to SLURM (recommended for large datasets)
+sbatch run_mass_stockfish.sh
+
+# Direct execution with custom settings
+python mass_stockfish_processor.py \
+    --input-dir logs \
+    --output-dir stockfish_analysis_results \
+    --workers 140 \
+    --nodes 150000 \
+    --chunk-size 50
+```
+
+#### **Quick Testing**
+```bash
+# Test with 5 games, 4 workers
+python mass_stockfish_processor.py --max-games 5 --workers 4 --nodes 1000
+
+# Analyze specific files
+python mass_stockfish_processor.py --files logs/small-8-600k_iters_pt_vs_stockfish_sweep.csv
+```
+
+#### **Output Files**
+```bash
+stockfish_analysis_results/
+├── {model}_detailed_{timestamp}.json     # Complete move-by-move data
+├── {model}_summary_{timestamp}.csv       # Game-level statistics  
+└── {model}_moves_{timestamp}.csv         # Move-by-move CSV data
+```
+
+### **Game Evaluation**
+```bash
+# Small test
+python scripts/parallel_chess_eval.py \
+    --model small-8-600k_iters.pt \
+    --games 100 \
+    --workers 4 \
+    --batch-size 8
+
+# Full evaluation
+python scripts/parallel_chess_eval.py \
+    --model large-24-600K_iters.pt \
+    --games 1000 \
+    --workers 11 \
+    --batch-size 16
+```
+
+## 📊 Analysis Capabilities
+
+### **🆕 Stockfish Analysis Features**
+- ✅ **Move Classifications**: Blunder, mistake, inaccuracy, good, best
+- ✅ **Centipawn Analysis**: Position scores, centipawn loss per move
+- ✅ **Best Move Analysis**: Stockfish recommendations + principal variations
+- ✅ **Position Metrics**: Material imbalance, complexity scoring (0-100)
+- ✅ **Game Phases**: Opening, middlegame, endgame detection
+- ✅ **Performance Stats**: Nodes, depth, time, NPS per position
+- ✅ **Error Patterns**: Blunder frequency, mistake distribution
+- ✅ **Comprehensive Statistics**: 25+ metrics per game
+
+### **Available Models for Analysis**
+```bash
+# Your trained models (in logs/)
+large-16-600k_iters_pt_vs_stockfish_sweep.csv      # Best model (~1548 Elo)
+medium-16-600k_iters_pt_vs_stockfish_sweep.csv     # ~1527 Elo
+medium-12-600k_iters_pt_vs_stockfish_sweep.csv     # ~1482 Elo
+small-16-600k_iters_pt_vs_stockfish_sweep.csv      # ~1469 Elo
+small-8-600k_iters_pt_vs_stockfish_sweep.csv       # ~1377 Elo
+```
+
+## 📈 Performance Expectations
+
+### **🆕 Stockfish Analysis Performance**
+- **Throughput**: ~50-100 games/minute (140 workers)
+- **80K games**: 15-30 hours (full analysis)
+- **Memory usage**: ~1.4TB RAM, 160 CPUs
+- **Output size**: ~1-2GB per 10K games
+
+### **Game Evaluation Performance**
+- **Throughput**: 5-15 games/second per job
+- **1000 games**: 2-5 minutes
+- **Memory usage**: 2-5GB GPU, 10-20GB RAM
+
+## 🛠️ Setup and Installation
+
+### **Prerequisites**
+```bash
+# On CSF3
+module load apps/anaconda3/2022.10
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### **🆕 Stockfish Setup**
+```bash
+# Install Stockfish (automated)
+bash install_stockfish.sh
+
+# Manual setup (see setup_stockfish.md for details)
+```
+
+### **First Run**
+```bash
+# Test Stockfish analysis
+python mass_stockfish_processor.py --max-games 2 --workers 2
+
+# Test game evaluation
+sbatch scripts/test_parallel_setup.sh
+```
+
+## 📚 Documentation
+
+- **[Stockfish Setup Guide](setup_stockfish.md)** - Installing and configuring Stockfish
+- **[Stockfish Features](stockfish_missing_features.md)** - Detailed analysis capabilities
+- **[Dashboard Guide](dashboard_README.md)** - Visualization and dashboard usage
+- **[CSF3 Setup Guide](docs/README_CSF3_Setup.md)** - Getting started with CSF3
+- **[Resource Limits](docs/CSF3_Resource_Limits.md)** - CSF3 resource constraints
+
+## 🔍 Monitoring and Analysis
+
+### **🆕 Stockfish Analysis Monitoring**
+```bash
+# Monitor batch processing
+tail -f mass_stockfish_*.out
+squeue -u $USER
+
+# Check results
+ls -lh stockfish_analysis_results/
+head stockfish_analysis_results/*_summary_*.csv
+```
+
+### **Analysis Outputs**
+```bash
+# Game-level statistics
+head stockfish_analysis_results/large-16_summary_*.csv
+
+# Move-by-move data  
+head stockfish_analysis_results/large-16_moves_*.csv
+
+# Detailed JSON data
+jq '.games[0].moves_analysis[0]' stockfish_analysis_results/large-16_detailed_*.json
+```
+
+## 🎮 Example Workflows
+
+### **🆕 Complete Analysis Pipeline**
+```bash
+# 1. Generate games (if needed)
+python scripts/parallel_chess_eval.py --model large-24-600K_iters.pt --games 10000
+
+# 2. Comprehensive Stockfish analysis
+sbatch run_mass_stockfish.sh
+
+# 3. Create visualizations
+python advanced_chess_dashboard.py --input stockfish_analysis_results/
+
+# 4. Generate benchmarks
+python chess_llm_benchmark.py --input stockfish_analysis_results/
+```
+
+### **Quick Model Comparison**
+```bash
+# Analyze existing game logs
+python mass_stockfish_processor.py --max-games 1000 --workers 32
+
+# Compare results
+python advanced_chess_dashboard.py --compare-models
+```
+
+### **Large-Scale Research Analysis**
+```bash
+# Full dataset analysis (80K+ games)
+sbatch run_mass_stockfish.sh
+
+# Monitor progress
+watch -n 30 'ls stockfish_analysis_results/ | wc -l'
+```
+
+## 📄 License
+
+This project builds upon the original chess evaluation framework and adds CSF3-optimized parallel processing capabilities.
+
+## 🤝 Contributing
+
+1. Test changes with `scripts/test_parallel_setup.sh`
+2. Update documentation in `docs/`
+3. Follow the established directory structure
+4. Monitor performance impact
+
+---
+
+**Ready to evaluate your chess models at scale on CSF3!** 🚀 

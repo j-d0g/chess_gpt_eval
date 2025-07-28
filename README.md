@@ -1,274 +1,305 @@
-# Chess GPT Evaluation on CSF3
+# Enhanced Chess Language Model Evaluation Suite
 
-A comprehensive system for evaluating chess language models against Stockfish on the University of Manchester's CSF3 cluster, with optimized parallel processing, batch inference, and **comprehensive Stockfish analysis**.
+A streamlined, comprehensive system for evaluating chess-playing language models with two main workflows: **Game Playing** and **Stockfish Analysis**. Optimized for high-performance computing clusters like CSF3.
 
-## 🚀 Quick Start
+## 🎯 **Two Main Workflows**
 
-### **Game Evaluation**
+### 1. **🎮 Game Playing Workflow**
+Play NanoGPT models against Stockfish (levels 0-9) and record comprehensive game data.
+
+### 2. **📊 Stockfish Analysis Workflow**  
+Analyze recorded games with Stockfish engine to extract move quality, centipawn loss, and tactical insights.
+
+## 🚀 **Quick Start**
+
+### **Workflow 1: Game Playing**
 ```bash
-# Test the parallel setup (20 games)
-sbatch scripts/test_parallel_setup.sh
+# Run game evaluation (recommended)
+sbatch scripts/game_playing/run_game_evaluation.sh large-16 0 9 1000
 
-# Run evaluation (1000 games)
-python scripts/parallel_chess_eval.py --model large-24-600K_iters.pt --games 1000
+# Direct execution
+python src/game_engine/main.py large-16 0 10 1000
 ```
 
-### **🆕 Stockfish Analysis (NEW)**
+### **Workflow 2: Stockfish Analysis**
 ```bash
-# Analyze all games with comprehensive Stockfish annotations
-sbatch run_mass_stockfish.sh
+# Run comprehensive analysis (recommended)
+sbatch scripts/analysis/run_stockfish_analysis.sh data/games 64 150000
 
-# Quick test (2 games)
-python mass_stockfish_processor.py --max-games 2 --workers 4
-
-# Custom analysis
-python mass_stockfish_processor.py --input-dir logs --workers 32 --nodes 150000
+# Direct execution
+python src/analysis/mass_stockfish_processor.py --input-dir data/games --workers 64
 ```
 
-## 📁 Repository Structure
+### **View Results**
+```bash
+# Enhanced game results visualization
+python src/visualization/enhanced_game_results.py
+
+# Interactive analysis dashboard
+python src/visualization/enhanced_analysis_dashboard.py
+```
+
+## 📁 **Streamlined Repository Structure**
 
 ```
 chess_gpt_eval/
-├── 🆕 STOCKFISH ANALYSIS SYSTEM
-│   ├── mass_stockfish_processor.py    # High-performance batch Stockfish analyzer
-│   ├── stockfish_analysis.py          # Detailed single-game analysis
-│   ├── run_mass_stockfish.sh          # SLURM batch processing script
-│   ├── advanced_chess_dashboard.py    # Comprehensive visualization dashboard
-│   ├── chess_llm_benchmark.py         # Standardized benchmarking suite
-│   └── setup_stockfish.md             # Stockfish installation guide
-├── docs/                              # Documentation
-│   ├── README_CSF3_Setup.md           # CSF3 setup guide
-│   ├── PARALLEL_SETUP_SUMMARY.md      # Complete parallel processing guide
-│   ├── CSF3_Resource_Limits.md        # Resource limits and optimization
-│   └── GPU_Performance_Analysis.md    # Performance optimization guide
-├── scripts/                           # Executable scripts
-│   ├── parallel_chess_eval.py         # Main parallel evaluation script
-│   ├── test_parallel_setup.sh         # Test script for parallel setup
-│   └── gpu_performance_test.py        # GPU performance diagnostics
-├── nanogpt/                           # NanoGPT model code
-│   ├── nanogpt_batch_module.py        # Batch-enabled inference module
-│   ├── model.py                       # GPT model implementation
-│   └── out/                           # Model checkpoints
-├── logs/                              # Game CSV files (input data)
-├── stockfish_analysis_results/        # 🆕 Comprehensive analysis outputs
-├── stockfish/                         # Stockfish engine installation
-├── results/                           # Test outputs and job results
-└── requirements.txt                   # Python dependencies
+├── 🎮 WORKFLOW 1: GAME PLAYING
+│   ├── src/models/
+│   │   ├── main.py                     # Main game playing engine
+│   │   ├── nanogpt/                    # NanoGPT model implementation
+│   │   └── llama/                      # LLaMA model implementation
+│   ├── scripts/game_playing/
+│   │   └── run_game_evaluation.sh      # Unified game playing script
+│   └── data/games/                     # Game result CSV files
+│
+├── 📊 WORKFLOW 2: STOCKFISH ANALYSIS
+│   ├── src/analysis/
+│   │   ├── mass_stockfish_processor.py # Batch analysis processor
+│   │   └── stockfish_analysis.py       # Single game analysis
+│   ├── scripts/analysis/
+│   │   └── run_stockfish_analysis.sh   # Unified analysis script
+│   └── data/analysis/                  # Analysis output files
+│
+├── 📈 VISUALIZATION & REPORTING
+│   ├── src/visualization/
+│   │   ├── enhanced_game_results.py    # 20-plot comprehensive analysis
+│   │   ├── enhanced_analysis_dashboard.py # Interactive web dashboard
+│   │   ├── generate_analysis_summary.py   # Analysis summaries
+│   │   └── model_comparative_analysis.py  # Model comparisons
+│
+├── 🔧 INFRASTRUCTURE
+│   ├── engines/                        # Stockfish engine binaries
+│   ├── docs/                           # Documentation
+│   ├── requirements.txt                # Python dependencies
+│   └── README.md                       # This file
+│
+└── 🗂️ ARCHIVE
+    ├── experimental/                   # Experimental scripts
+    ├── legacy/                         # Legacy implementations
+    └── outputs/                        # Generated output files
 ```
 
-## 🎯 Key Features
+## 🌟 **Enhanced Features**
 
-### **🆕 Comprehensive Stockfish Analysis**
-- **Move-by-Move Analysis**: Centipawn loss, blunders, mistakes, inaccuracies
-- **Position Evaluation**: Material imbalance, complexity scoring, game phases
-- **Best Move Analysis**: Principal variations, alternative lines
-- **High Performance**: 140 workers, 150K nodes per position
-- **Multiple Outputs**: JSON (detailed), CSV (summary + moves), visualizations
+### **Enhanced Game Results Analysis**
+- **20 comprehensive visualizations** (vs. previous 16)
+- **Elo estimation** based on Stockfish performance
+- **Opening analysis** with categorization
+- **Time pressure analysis** (performance degradation)
+- **Move-bucket advantage heatmaps** (NEW!)
+- **Consistency metrics** and phase specialists
+- **Architecture impact analysis**
 
-### **Parallel Game Evaluation**
-- **Batch GPU Inference**: Process 16-32 chess positions simultaneously
-- **CPU Parallelization**: 11 workers handle game logic and Stockfish
-- **Queue-based Architecture**: Efficient communication between GPU and CPU workers
+### **Enhanced Analysis Dashboard**
+- **5 analysis modes**: Overview, Move Quality, Game Phases, Error Patterns, Comparative
+- **Interactive filtering** by game phase, metrics, confidence intervals
+- **Intelligent insights generation** with automated recommendations
+- **Enhanced summary tables** with 10+ metrics
+- **Real-time visualization** updates
 
-### **CSF3 Optimization**
-- **Resource Discovery**: Automatically determined optimal configurations
-- **Memory Efficiency**: Works within CSF3 resource limits
-- **Array Jobs**: Scale to multiple concurrent evaluations
+### **Superior Analysis Capabilities**
+- **Comprehensive metrics**: 25+ statistics per game
+- **Move classifications**: Best, Good, Suboptimal, Inaccuracies, Mistakes, Blunders
+- **Position complexity scoring** (0-100 scale)
+- **Game phase detection**: Opening, Middlegame, Endgame
+- **Performance correlation analysis**
+- **Error pattern identification**
 
-## 🔧 Usage
+## 🔧 **Detailed Usage**
 
-### **🆕 Stockfish Batch Analysis**
+### **Game Playing Workflow**
 
-#### **Full Analysis (80K+ games)**
+#### **Basic Usage**
 ```bash
-# Submit to SLURM (recommended for large datasets)
-sbatch run_mass_stockfish.sh
+# Play 1000 games per Stockfish level (0-9)
+sbatch scripts/game_playing/run_game_evaluation.sh large-16 0 9 1000
 
-# Direct execution with custom settings
-python mass_stockfish_processor.py \
-    --input-dir logs \
-    --output-dir stockfish_analysis_results \
-    --workers 140 \
-    --nodes 150000 \
-    --chunk-size 50
-```
-
-#### **Quick Testing**
-```bash
-# Test with 5 games, 4 workers
-python mass_stockfish_processor.py --max-games 5 --workers 4 --nodes 1000
-
-# Analyze specific files
-python mass_stockfish_processor.py --files logs/small-8-600k_iters_pt_vs_stockfish_sweep.csv
+# Quick test (100 games, levels 0-2)
+sbatch scripts/game_playing/run_game_evaluation.sh small-8 0 3 100
 ```
 
 #### **Output Files**
 ```bash
-stockfish_analysis_results/
-├── {model}_detailed_{timestamp}.json     # Complete move-by-move data
-├── {model}_summary_{timestamp}.csv       # Game-level statistics  
-└── {model}_moves_{timestamp}.csv         # Move-by-move CSV data
+data/games/
+├── large-16-600k_iters_pt_vs_stockfish_sweep.csv
+├── medium-16-600k_iters_pt_vs_stockfish_sweep.csv
+└── small-8-600k_iters_pt_vs_stockfish_sweep.csv
 ```
 
-### **Game Evaluation**
+### **Stockfish Analysis Workflow**
+
+#### **Basic Usage**
 ```bash
-# Small test
-python scripts/parallel_chess_eval.py \
-    --model small-8-600k_iters.pt \
-    --games 100 \
-    --workers 4 \
-    --batch-size 8
+# Comprehensive analysis (all games, 64 workers)
+sbatch scripts/analysis/run_stockfish_analysis.sh data/games 64 150000
 
-# Full evaluation
-python scripts/parallel_chess_eval.py \
-    --model large-24-600K_iters.pt \
-    --games 1000 \
-    --workers 11 \
-    --batch-size 16
+# Quick analysis (4 workers, 1000 nodes)
+python src/analysis/mass_stockfish_processor.py --workers 4 --nodes 1000 --max-games 100
 ```
 
-## 📊 Analysis Capabilities
-
-### **🆕 Stockfish Analysis Features**
-- ✅ **Move Classifications**: Blunder, mistake, inaccuracy, good, best
-- ✅ **Centipawn Analysis**: Position scores, centipawn loss per move
-- ✅ **Best Move Analysis**: Stockfish recommendations + principal variations
-- ✅ **Position Metrics**: Material imbalance, complexity scoring (0-100)
-- ✅ **Game Phases**: Opening, middlegame, endgame detection
-- ✅ **Performance Stats**: Nodes, depth, time, NPS per position
-- ✅ **Error Patterns**: Blunder frequency, mistake distribution
-- ✅ **Comprehensive Statistics**: 25+ metrics per game
-
-### **Available Models for Analysis**
+#### **Output Files**
 ```bash
-# Your trained models (in logs/)
-large-16-600k_iters_pt_vs_stockfish_sweep.csv      # Best model (~1548 Elo)
-medium-16-600k_iters_pt_vs_stockfish_sweep.csv     # ~1527 Elo
-medium-12-600k_iters_pt_vs_stockfish_sweep.csv     # ~1482 Elo
-small-16-600k_iters_pt_vs_stockfish_sweep.csv      # ~1469 Elo
-small-8-600k_iters_pt_vs_stockfish_sweep.csv       # ~1377 Elo
+data/analysis/
+├── {model}_summary_{timestamp}.csv      # Game-level statistics
+├── {model}_moves_{timestamp}.csv        # Move-by-move analysis
+└── {model}_detailed_{timestamp}.json    # Complete analysis data
 ```
 
-## 📈 Performance Expectations
+### **Visualization & Analysis**
 
-### **🆕 Stockfish Analysis Performance**
-- **Throughput**: ~50-100 games/minute (140 workers)
-- **80K games**: 15-30 hours (full analysis)
-- **Memory usage**: ~1.4TB RAM, 160 CPUs
-- **Output size**: ~1-2GB per 10K games
+#### **Enhanced Game Results**
+```bash
+# Generate 20-plot comprehensive analysis
+python src/visualization/enhanced_game_results.py
 
-### **Game Evaluation Performance**
+# Output: enhanced_chess_analysis.png (24x30 inches, 300 DPI)
+```
+
+#### **Interactive Dashboard**
+```bash
+# Launch web dashboard
+python src/visualization/enhanced_analysis_dashboard.py
+
+# Access at: http://localhost:8050
+```
+
+## 📊 **Analysis Capabilities**
+
+### **Game Playing Analysis**
+- **Performance vs Stockfish levels** with error bars and Elo estimates
+- **Opening repertoire analysis** with success rates by category
+- **Time pressure effects** (short vs long games)
+- **Architecture impact** (model size vs performance)
+- **Move-bucket analysis** (performance by game phase)
+- **Consistency scoring** and performance variance
+
+### **Stockfish Analysis**
+- **Move quality distribution** (Best/Good/Suboptimal/Inaccuracies/Mistakes/Blunders)
+- **Centipawn loss analysis** with distributions and trends
+- **Position complexity scoring** (0-100 scale)
+- **Game phase performance** (Opening/Middlegame/Endgame accuracy)
+- **Error pattern identification** and correlation analysis
+- **Critical moment detection** and tactical evaluation
+
+### **Comparative Analysis**
+- **Model rankings** by estimated Elo
+- **Performance correlation matrices**
+- **Strength vs consistency scatter plots**
+- **Improvement potential analysis**
+- **Phase specialist identification**
+- **Architecture optimization insights**
+
+## 🎯 **Key Improvements**
+
+### **From Previous Version**
+- ✅ **Streamlined structure** - Clear separation of two workflows
+- ✅ **Enhanced visualizations** - 20 plots vs 16, with superior analysis
+- ✅ **Elo estimation** - Proper chess rating estimates
+- ✅ **Opening analysis** - Categorized opening performance
+- ✅ **Interactive dashboard** - 5 analysis modes with intelligent insights
+- ✅ **Consistency metrics** - Performance variance analysis
+- ✅ **Move-bucket heatmaps** - Performance by game phase
+- ✅ **Unified entry scripts** - Simple workflow execution
+- ✅ **Intelligent insights** - Automated recommendations
+
+### **Archived Features**
+- 🗂️ **Experimental scripts** moved to `archive/experimental/`
+- 🗂️ **Legacy implementations** moved to `archive/legacy/`
+- 🗂️ **Generated outputs** moved to `archive/outputs/`
+- 🗂️ **Utility notebooks** moved to `archive/legacy/utils/`
+
+## 🚀 **Performance Expectations**
+
+### **Game Playing**
 - **Throughput**: 5-15 games/second per job
-- **1000 games**: 2-5 minutes
-- **Memory usage**: 2-5GB GPU, 10-20GB RAM
+- **1000 games**: 2-10 minutes depending on model
+- **Memory usage**: 2-5GB per job
 
-## 🛠️ Setup and Installation
+### **Stockfish Analysis**
+- **Throughput**: 50-100 games/minute with 64 workers
+- **10,000 games**: 2-4 hours
+- **80,000 games**: 15-30 hours
+- **Memory usage**: 8GB per worker
+
+## 🛠️ **Setup & Installation**
 
 ### **Prerequisites**
-```bash
+    ```bash
 # On CSF3
-module load apps/anaconda3/2022.10
+module load apps/binapps/anaconda3/2023.09
+module load tools/gcc/11.2.0
 
 # Install dependencies
-pip install -r requirements.txt
-```
+    pip install -r requirements.txt
+    ```
 
-### **🆕 Stockfish Setup**
-```bash
-# Install Stockfish (automated)
-bash install_stockfish.sh
-
-# Manual setup (see setup_stockfish.md for details)
-```
+### **Stockfish Setup**
+    ```bash
+# Stockfish binaries included in engines/ directory
+# Verify installation
+./engines/stockfish-ubuntu-x86-64-avx2
+    ```
 
 ### **First Run**
-```bash
-# Test Stockfish analysis
-python mass_stockfish_processor.py --max-games 2 --workers 2
+    ```bash
+# Test game playing
+sbatch scripts/game_playing/run_game_evaluation.sh small-8 0 3 10
 
-# Test game evaluation
-sbatch scripts/test_parallel_setup.sh
+# Test analysis
+python src/analysis/mass_stockfish_processor.py --max-games 5 --workers 2
 ```
 
-## 📚 Documentation
+## 📚 **Documentation**
 
-- **[Stockfish Setup Guide](setup_stockfish.md)** - Installing and configuring Stockfish
-- **[Stockfish Features](stockfish_missing_features.md)** - Detailed analysis capabilities
-- **[Dashboard Guide](dashboard_README.md)** - Visualization and dashboard usage
 - **[CSF3 Setup Guide](docs/README_CSF3_Setup.md)** - Getting started with CSF3
-- **[Resource Limits](docs/CSF3_Resource_Limits.md)** - CSF3 resource constraints
+- **[Dashboard Guide](docs/dashboard_README.md)** - Visualization and dashboard usage
+- **[Analysis Features](docs/stockfish_missing_features.md)** - Detailed analysis capabilities
 
-## 🔍 Monitoring and Analysis
+## 🔍 **Example Workflows**
 
-### **🆕 Stockfish Analysis Monitoring**
-```bash
-# Monitor batch processing
-tail -f mass_stockfish_*.out
-squeue -u $USER
+### **Complete Analysis Pipeline**
+    ```bash
+# 1. Generate games
+sbatch scripts/game_playing/run_game_evaluation.sh large-16 0 9 1000
 
-# Check results
-ls -lh stockfish_analysis_results/
-head stockfish_analysis_results/*_summary_*.csv
-```
+# 2. Analyze games
+sbatch scripts/analysis/run_stockfish_analysis.sh data/games 64 150000
 
-### **Analysis Outputs**
-```bash
-# Game-level statistics
-head stockfish_analysis_results/large-16_summary_*.csv
+# 3. Generate visualizations
+python src/visualization/enhanced_game_results.py
 
-# Move-by-move data  
-head stockfish_analysis_results/large-16_moves_*.csv
-
-# Detailed JSON data
-jq '.games[0].moves_analysis[0]' stockfish_analysis_results/large-16_detailed_*.json
-```
-
-## 🎮 Example Workflows
-
-### **🆕 Complete Analysis Pipeline**
-```bash
-# 1. Generate games (if needed)
-python scripts/parallel_chess_eval.py --model large-24-600K_iters.pt --games 10000
-
-# 2. Comprehensive Stockfish analysis
-sbatch run_mass_stockfish.sh
-
-# 3. Create visualizations
-python advanced_chess_dashboard.py --input stockfish_analysis_results/
-
-# 4. Generate benchmarks
-python chess_llm_benchmark.py --input stockfish_analysis_results/
+# 4. Launch dashboard
+python src/visualization/enhanced_analysis_dashboard.py
 ```
 
 ### **Quick Model Comparison**
 ```bash
-# Analyze existing game logs
-python mass_stockfish_processor.py --max-games 1000 --workers 32
+# Compare multiple models
+for model in small-8 medium-12 large-16; do
+    sbatch scripts/game_playing/run_game_evaluation.sh $model 0 5 500
+done
 
-# Compare results
-python advanced_chess_dashboard.py --compare-models
+# Analyze all results
+sbatch scripts/analysis/run_stockfish_analysis.sh data/games 32 100000
+
+# View comparison
+python src/visualization/enhanced_analysis_dashboard.py
 ```
 
-### **Large-Scale Research Analysis**
-```bash
-# Full dataset analysis (80K+ games)
-sbatch run_mass_stockfish.sh
+## 🎯 **Model Performance Rankings**
 
-# Monitor progress
-watch -n 30 'ls stockfish_analysis_results/ | wc -l'
-```
+Based on comprehensive analysis of 80,000+ games:
 
-## 📄 License
+1. **large-16-600k_iters** - ~1548 Elo (Best overall)
+2. **medium-16-600k_iters** - ~1527 Elo (Best consistency)
+3. **medium-12-600k_iters** - ~1482 Elo (Balanced performance)
+4. **small-16-600k_iters** - ~1469 Elo (Good efficiency)
+5. **small-8-600k_iters** - ~1377 Elo (Baseline)
 
-This project builds upon the original chess evaluation framework and adds CSF3-optimized parallel processing capabilities.
+## 📄 **License**
 
-## 🤝 Contributing
-
-1. Test changes with `scripts/test_parallel_setup.sh`
-2. Update documentation in `docs/`
-3. Follow the established directory structure
-4. Monitor performance impact
+This project builds upon the original chess evaluation framework and adds comprehensive analysis capabilities with streamlined workflows.
 
 ---
 
-**Ready to evaluate your chess models at scale on CSF3!** 🚀 
+**Ready to evaluate your chess models with enhanced analysis!** 🚀 

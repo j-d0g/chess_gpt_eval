@@ -1,0 +1,5 @@
+{
+  "dataset_name": "chess-gpt-evaluation",
+  "description": "Comprehensive evaluation of chess-playing language models against Stockfish",
+  "num_models": 12,
+  "total_games": 
