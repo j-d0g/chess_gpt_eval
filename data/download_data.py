@@ -12,8 +12,8 @@ This includes:
 - Model performance summaries
 - Visualization outputs
 
-Usage:
-    python download_data.py [--subset SUBSET] [--force]
+Usage (from project root):
+    python data/download_data.py [--subset SUBSET] [--force]
     
 Options:
     --subset: Download specific subset (games, analysis, all) [default: all]
@@ -29,7 +29,7 @@ import shutil
 
 # Repository configuration
 REPO_ID = "jd0g/chess-language-model-evaluation"
-LOCAL_DATA_DIR = Path("data")
+LOCAL_DATA_DIR = Path(".")  # Current directory (data/)
 
 def download_subset(subset: str, force: bool = False):
     """Download specific subset of the dataset"""
@@ -151,10 +151,10 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python download_data.py                    # Download complete dataset
-  python download_data.py --subset games    # Download only game files
-  python download_data.py --subset analysis # Download only analysis files
-  python download_data.py --force           # Overwrite existing files
+  python data/download_data.py                    # Download complete dataset
+  python data/download_data.py --subset games    # Download only game files
+  python data/download_data.py --subset analysis # Download only analysis files
+  python data/download_data.py --force           # Overwrite existing files
         """
     )
     
@@ -197,6 +197,7 @@ Examples:
         print(f"\n🎉 Dataset ready! You can now run:")
         print(f"   python src/visualization/interactive_dashboard.py")
         print(f"   python src/analysis/mass_stockfish_processor.py --help")
+        print(f"   python launch_dashboards.py interactive")
         sys.exit(0)
     else:
         sys.exit(1)

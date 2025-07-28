@@ -129,6 +129,7 @@ ax1.grid(True, alpha=0.3)
 ax1.set_ylim(0, 1.0)
 ax1.set_yticks(np.arange(0, 1.1, 0.1))  # 0.1 increments
 ax1.set_xticks(range(10))  # Every integer stockfish level 0-9
+ax1.set_xticklabels([str(i) for i in range(10)])
 
 # 2. Average score rate comparison (normalized win rate)
 ax2 = plt.subplot(4, 4, 2)
@@ -350,10 +351,10 @@ for model, df in all_data.items():
         # Create game length bins with new structure
         df_clean = df.dropna(subset=['number_of_moves', 'score']).copy()
         df_clean['length_bin'] = pd.cut(df_clean['number_of_moves'], 
-                                       bins=[0, 40, 50, 60, 70, 80, 90, 100, float('inf')], 
-                                       labels=['<40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '100+'])
+                                       bins=[0, 40, 50, 60, 70, 80, 90, 100], 
+                                       labels=['<40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100'])
         
-        for bin_name in ['<40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '100+']:
+        for bin_name in ['<40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100']:
             bin_games = df_clean[df_clean['length_bin'] == bin_name]
             if len(bin_games) > 0:
                 win_rate = bin_games['score'].mean()
@@ -479,8 +480,8 @@ for i, model_name in enumerate(raw_model_order[:6]):  # Top 6 models for clarity
                         linewidth=2, color=colors[i])
 
 ax10.set_xlabel('Game Length Bins (moves)')
-ax10.set_ylabel('Illegal Move Rate (%)')
-ax10.set_title('Illegal Move Rate vs Game Length\n(Do models deteriorate in longer games?)')
+ax10.set_ylabel('Illegal Moves per Game (%)')
+ax10.set_title('Illegal Moves per Game vs Game Length\n(Do models make more illegal moves in longer games?)')
 ax10.set_xticks(range(len(move_labels)))
 ax10.set_xticklabels(move_labels, rotation=45)
 ax10.legend(fontsize=8)
@@ -522,10 +523,10 @@ for i, model_name in enumerate(raw_model_order[:6]):  # Top 6 models
         if 'number_of_moves' in df.columns and 'score' in df.columns:
             df_clean = df.dropna(subset=['number_of_moves', 'score'])
             
-            # Use new bin structure with clear labels
-            bins = [0, 40, 50, 60, 70, 80, 90, 100, float('inf')]
-            bin_centers = [35, 45, 55, 65, 75, 85, 95, 110]
-            bin_labels = ['<40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '100+']
+            # Use new bin structure with clear labels (no 100+ since no games reach that)
+            bins = [0, 40, 50, 60, 70, 80, 90, 100]
+            bin_centers = [35, 45, 55, 65, 75, 85, 95]
+            bin_labels = ['<40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100']
             
             df_clean = df_clean.copy()
             df_clean['length_bin'] = pd.cut(df_clean['number_of_moves'], bins=bins, labels=bin_labels)
@@ -555,8 +556,8 @@ ax12.grid(True, alpha=0.3)
 ax12.set_ylim(0, 1)
 
 # Set x-axis labels for the bins
-bin_labels_display = ['<40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '100+']
-bin_centers_display = [35, 45, 55, 65, 75, 85, 95, 110]
+bin_labels_display = ['<40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100']
+bin_centers_display = [35, 45, 55, 65, 75, 85, 95]
 ax12.set_xticks(bin_centers_display)
 ax12.set_xticklabels(bin_labels_display, rotation=45)
 
@@ -587,9 +588,9 @@ for i, model_name in enumerate(raw_model_order[:6]):  # Top 6 models
                          label=model_name.replace('_pt', '').replace('_', ' '), 
                          linewidth=2, color=colors[i], markersize=6)
 
-ax13.set_xlabel('Minimum Game Length (moves)')
+ax13.set_xlabel('Minimum Game Length (>X moves)')
 ax13.set_ylabel('Win Rate')
-ax13.set_title('Win Rate in Games Longer Than X Moves\n(Performance in extended games)')
+ax13.set_title('Win Rate in Games >X Moves\n(Performance in extended games)')
 ax13.legend(fontsize=8)
 ax13.grid(True, alpha=0.3)
 ax13.set_ylim(0, 1)
@@ -633,13 +634,13 @@ if reverse_cumulative_win_rate:
     sorted_models = sorted(model_avg_scores.keys(), key=lambda x: model_avg_scores[x], reverse=True)
     reverse_pivot = reverse_pivot.reindex([m for m in sorted_models if m in reverse_pivot.index])
     
-    # Reorder columns to show in logical order
+    # Reorder columns to show in logical order (move >100 to end)
     col_order = ['>0', '>20', '>40', '>60', '>80', '>100']
     reverse_pivot = reverse_pivot[[col for col in col_order if col in reverse_pivot.columns]]
     
     sns.heatmap(reverse_pivot, annot=True, fmt='.2f', cmap='RdYlGn', ax=ax14, 
                 vmin=0, vmax=1, cbar_kws={'label': 'Win Rate'}, annot_kws={'fontsize': 8})
-    ax14.set_title('Win Rate by Game Length (Reverse Cumulative)\n(Performance in games longer than X moves)')
+    ax14.set_title('Win Rate by Game Length (>X moves)\n(Performance in games longer than X moves)')
 
 # 15. Win Rate by Game Length (Cumulative) - NEW VISUALIZATION
 ax15 = plt.subplot(4, 4, 15)

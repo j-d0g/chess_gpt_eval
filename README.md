@@ -240,14 +240,14 @@ pip install -r requirements.txt
 ### **Download Dataset**
 ```bash
 # Download complete dataset from HuggingFace (11GB)
-python download_data.py
+python data/download_data.py
 
 # Download only specific subsets
-python download_data.py --subset games    # Game CSV files only
-python download_data.py --subset analysis # Analysis results only
+python data/download_data.py --subset games    # Game CSV files only
+python data/download_data.py --subset analysis # Analysis results only
 
 # See all options
-python download_data.py --help
+python data/download_data.py --help
 ```
 
 ### **Stockfish Setup**

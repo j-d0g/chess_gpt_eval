@@ -104,6 +104,7 @@ logs/*
 *.pt
 src/models/nanogpt/out/*.pt
 
-# Data directory (use download_data.py to fetch from HuggingFace)
+# Data directory (use data/download_data.py to fetch from HuggingFace)
 data/
 !data/.gitkeep
+!data/download_data.py
