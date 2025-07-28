@@ -224,36 +224,48 @@ python src/visualization/enhanced_analysis_dashboard.py
 ## 🛠️ **Setup & Installation**
 
 ### **Prerequisites**
-    ```bash
-# On CSF3
+```bash
+# On CSF3 (University of Manchester)
 module load apps/binapps/anaconda3/2023.09
 module load tools/gcc/11.2.0
 
+# Other systems
+# module load apps/anaconda3/2022.10
+
 # Install dependencies
-    pip install -r requirements.txt
-    ```
+pip install -r requirements.txt
+```
 
 ### **Stockfish Setup**
-    ```bash
+```bash
 # Stockfish binaries included in engines/ directory
 # Verify installation
 ./engines/stockfish-ubuntu-x86-64-avx2
-    ```
+
+# For automated setup, see docs/setup_stockfish.md
+```
 
 ### **First Run**
-    ```bash
+```bash
 # Test game playing
 sbatch scripts/game_playing/run_game_evaluation.sh small-8 0 3 10
 
-# Test analysis
+# Test analysis  
 python src/analysis/mass_stockfish_processor.py --max-games 5 --workers 2
 ```
 
 ## 📚 **Documentation**
 
-- **[CSF3 Setup Guide](docs/README_CSF3_Setup.md)** - Getting started with CSF3
-- **[Dashboard Guide](docs/dashboard_README.md)** - Visualization and dashboard usage
-- **[Analysis Features](docs/stockfish_missing_features.md)** - Detailed analysis capabilities
+**Getting Started:**
+- **[CSF3 Setup Guide](docs/README_CSF3_Setup.md)** - University of Manchester CSF3 cluster setup
+- **[CSF3 Resource Limits](docs/CSF3_Resource_Limits.md)** - Resource optimization for CSF3
+
+**Analysis & Visualization:**
+- **[Dashboard Guide](docs/dashboard_README.md)** - Interactive visualization and dashboard usage  
+- **[Stockfish Features](docs/stockfish_missing_features.md)** - Detailed analysis capabilities
+- **[Stockfish Setup Guide](docs/setup_stockfish.md)** - Installing and configuring Stockfish engine
+
+**For CSF3 Users:** See **[docs/README.md](docs/README.md)** for CSF3-specific workflows and optimization.
 
 ## 🔍 **Example Workflows**
 

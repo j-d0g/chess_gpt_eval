@@ -1,5 +1,7 @@
 # Stockfish Setup for Batch Processing
 
+**Stockfish engine installation guide** for chess model evaluation. For project overview and usage examples, see the [main README](../README.md).
+
 ## Quick Setup
 
 ### Option 1: Install Stockfish (Recommended)

@@ -1,5 +1,7 @@
 # Chess GPT Analysis Dashboard & Benchmarking Suite
 
+**Interactive visualization and benchmarking guide** for chess model evaluation results. For project overview and data generation, see the [main README](../README.md).
+
 A comprehensive analysis and benchmarking framework for evaluating chess-playing language models (NanoGPT and similar architectures).
 
 ## Overview

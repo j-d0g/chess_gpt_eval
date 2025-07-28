@@ -1,5 +1,7 @@
 # CSF3 Setup Guide - University of Manchester
 
+**CSF3 cluster setup guide** for running chess model evaluation. For project overview and current workflows, see the [main README](../README.md).
+
 This guide covers how to get started with the CSF3 (Computational Shared Facility) system at the University of Manchester, specifically for GPU-accelerated machine learning projects.
 
 ## System Overview
