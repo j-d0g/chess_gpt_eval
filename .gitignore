@@ -100,7 +100,7 @@ gpt_test_output.txt
 /nanogpt/activations/*
 logs/*
 
-# Large model files
+# Large model files (download using model download scripts)
 *.pt
 src/models/nanogpt/out/*.pt
 
