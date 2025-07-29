@@ -108,3 +108,6 @@ src/models/nanogpt/out/*.pt
 data/
 !data/.gitkeep
 !data/download_data.py
+
+# Stockfish binaries (download using docs/stockfish.md instructions)
+src/models/stockfish/stockfish-*
