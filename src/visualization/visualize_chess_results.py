@@ -733,6 +733,74 @@ plt.tight_layout()
 plt.savefig('chess_results_analysis.png', dpi=300, bbox_inches='tight')
 plt.show()
 
+# Create an additional figure for the illegal move rate by stockfish level
+fig_extra = plt.figure(figsize=(10, 6))
+ax_extra = plt.subplot(1, 1, 1)
+
+# Calculate illegal move rates averaged across all models for each Stockfish level
+stockfish_colors = plt.cm.tab10(np.linspace(0, 1, 10))
+
+for sf_level in range(10):
+    # Collect data across all models for this Stockfish level
+    all_illegal_rates = []
+    all_bin_centers = []
+    
+    # Define consistent bins
+    move_bins = list(range(10, 101, 10))
+    
+    for model_name in raw_model_order:
+        if model_name in all_data:
+            df = all_data[model_name]
+            # Filter for this Stockfish level
+            sf_games = df[df['stockfish_level'] == sf_level]
+            sf_clean = sf_games.dropna(subset=['number_of_moves', 'player_one_illegal_moves'])
+            
+            if len(sf_clean) > 50:  # Need sufficient data
+                for j in range(len(move_bins)-1):
+                    start_move = move_bins[j]
+                    end_move = move_bins[j+1]
+                    
+                    games_in_range = sf_clean[
+                        (sf_clean['number_of_moves'] >= start_move) & 
+                        (sf_clean['number_of_moves'] < end_move)
+                    ]
+                    
+                    if len(games_in_range) > 20:  # Sufficient games in this bin
+                        # Calculate illegal moves per game (not per move)
+                        avg_illegal = games_in_range['player_one_illegal_moves'].mean()
+                        all_illegal_rates.append(avg_illegal)
+                        all_bin_centers.append((start_move + end_move) / 2)
+    
+    # Calculate average across models for each bin
+    if all_illegal_rates:
+        # Group by bin centers and average
+        bin_dict = {}
+        for center, rate in zip(all_bin_centers, all_illegal_rates):
+            if center not in bin_dict:
+                bin_dict[center] = []
+            bin_dict[center].append(rate)
+        
+        # Calculate averages
+        avg_centers = sorted(bin_dict.keys())
+        avg_rates = [np.mean(bin_dict[center]) for center in avg_centers]
+        
+        # Plot line for this Stockfish level
+        ax_extra.plot(avg_centers, avg_rates, marker='o', 
+                     label=f'Stockfish {sf_level}', 
+                     color=stockfish_colors[sf_level], 
+                     linewidth=2, markersize=6)
+
+ax_extra.set_xlabel('Game Length (moves)')
+ax_extra.set_ylabel('Average Illegal Moves per Game')
+ax_extra.set_title('Illegal Move Patterns by Stockfish Level\n(Averaged across all NanoGPT models)')
+ax_extra.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=9)
+ax_extra.grid(True, alpha=0.3)
+ax_extra.set_xlim(10, 100)
+
+plt.tight_layout()
+plt.savefig('chess_illegal_moves_by_stockfish.png', dpi=300, bbox_inches='tight')
+plt.show()
+
 # Create a comprehensive summary statistics table
 print("\n" + "="*120)
 print("COMPREHENSIVE MODEL PERFORMANCE SUMMARY TABLE")
