@@ -68,7 +68,7 @@ class StockfishPlayer(Player):
         if platform.system() == "Linux":
             # Use local Stockfish installation
             import os
-            local_path = os.path.join(os.getcwd(), "stockfish/stockfish-ubuntu-x86-64-modern")
+            local_path = os.path.join(os.getcwd(), "src/models/stockfish/stockfish-ubuntu-x86-64-modern")
             if os.path.exists(local_path):
                 return local_path
             return "/usr/games/stockfish"

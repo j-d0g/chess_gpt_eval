@@ -17,17 +17,16 @@ stockfish --help
 
 ### Option 2: Download Stockfish Binary
 ```bash
-# Download and install locally
-mkdir -p ~/bin
-cd ~/bin
+# Download and install to project directory
+mkdir -p src/models/stockfish
+cd src/models/stockfish
 wget https://github.com/official-stockfish/Stockfish/releases/download/sf_16/stockfish-ubuntu-x86-64-avx2.tar
 tar -xf stockfish-ubuntu-x86-64-avx2.tar
-mv stockfish/stockfish-ubuntu-x86-64-avx2 stockfish
-chmod +x stockfish
+mv stockfish/stockfish-ubuntu-x86-64-avx2 ./
+chmod +x stockfish-ubuntu-x86-64-avx2
 
-# Add to PATH
-echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
+# Return to project root
+cd ../../..
 ```
 
 ## Usage

@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 class StockfishProcessor:
     """High-performance Stockfish processor for batch analysis with comprehensive analytics"""
     
-    def __init__(self, stockfish_path: str = "./stockfish/stockfish-ubuntu-x86-64-avx2", 
+    def __init__(self, stockfish_path: str = "./src/models/stockfish/stockfish-ubuntu-x86-64-avx2", 
                  nodes_per_position: int = 150000,
                  time_limit: float = 10.0):
         self.stockfish_path = stockfish_path
@@ -51,11 +51,11 @@ class StockfishProcessor:
         if not os.path.exists(stockfish_path):
             # Try common locations
             common_paths = [
-                "./stockfish/stockfish-ubuntu-x86-64-avx2",  # Your local build (AVX2)
-                "./stockfish/stockfish-ubuntu-x86-64-modern",  # Your local build (modern)
+                "./src/models/stockfish/stockfish-ubuntu-x86-64-avx2",  # Your local build (AVX2)
+                "./src/models/stockfish/stockfish-ubuntu-x86-64-modern",  # Your local build (modern)
                 "/usr/bin/stockfish",
                 "/usr/local/bin/stockfish", 
-                "./stockfish/stockfish",
+                "./src/models/stockfish/stockfish",
                 "stockfish"
             ]
             for path in common_paths:

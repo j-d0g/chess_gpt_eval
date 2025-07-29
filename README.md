@@ -46,7 +46,8 @@ chess_gpt_eval/
 ├── 🎮 WORKFLOW 1: GAME PLAYING
 │   ├── src/models/
 │   │   ├── main.py                     # Main game playing engine
-│   │   └── nanogpt/                    # NanoGPT model implementation
+│   │   ├── nanogpt/                    # NanoGPT model implementation
+│   │   └── stockfish/                  # Stockfish engine binaries
 │   └── data/games/                     # Game result CSV files
 │
 ├── 📊 WORKFLOW 2: STOCKFISH ANALYSIS
@@ -66,7 +67,6 @@ chess_gpt_eval/
 │       └── launch_analysis_dashboard.sh # Dashboard launcher script
 │
 ├── 🔧 INFRASTRUCTURE
-│   ├── engines/                        # Stockfish engine binaries
 │   ├── docs/                           # Documentation
 │   ├── requirements.txt                # Python dependencies
 │   └── README.md                       # This file
@@ -252,11 +252,11 @@ python data/download_data.py --help
 
 ### **Stockfish Setup**
 ```bash
-# Stockfish binaries included in engines/ directory
+# Stockfish binaries included in src/models/stockfish/ directory
 # Verify installation
-./engines/stockfish-ubuntu-x86-64-avx2
+./src/models/stockfish/stockfish-ubuntu-x86-64-avx2
 
-# For automated setup, see docs/setup_stockfish.md
+# For automated setup, see docs/stockfish.md
 ```
 
 ### **First Run**

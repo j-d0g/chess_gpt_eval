@@ -71,7 +71,7 @@ python src/analysis/mass_stockfish_processor.py \
     --workers "$WORKERS" \
     --chunk-size 50 \
     --nodes "$NODES_PER_POSITION" \
-    --stockfish-path ./engines/stockfish-ubuntu-x86-64-avx2
+    --stockfish-path ./src/models/stockfish/stockfish-ubuntu-x86-64-avx2
 
 # Check if successful
 if [ $? -eq 0 ]; then
