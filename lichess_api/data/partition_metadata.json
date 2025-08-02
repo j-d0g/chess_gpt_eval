@@ -1,0 +1,35 @@
+{
+  "creation_timestamp": "2025-08-02T13:32:46.896358",
+  "original_dataset": "data/llm_fundamentals_100k.csv",
+  "processed_sample": "data/sample_10k_for_api.csv",
+  "original_count": 100000,
+  "unique_count": 78400,
+  "processed_count": 9774,
+  "remaining_count": 68626,
+  "partition_1_count": 34527,
+  "partition_2_count": 34099,
+  "partitioning_method": "md5_hash_modulo_2",
+  "deterministic": true,
+  "partition_analyses": {
+    "partition_1": {
+      "count": 34527,
+      "rating_mean": 1569.7918440640658,
+      "popularity_mean": 95.34911808150143,
+      "phase_distribution": {
+        "opening": 2706,
+        "middlegame": 16087,
+        "endgame": 15734
+      }
+    },
+    "partition_2": {
+      "count": 34099,
+      "rating_mean": 1569.8956274377547,
+      "popularity_mean": 95.36118361242265,
+      "phase_distribution": {
+        "opening": 2647,
+        "middlegame": 15979,
+        "endgame": 15473
+      }
+    }
+  }
+}
