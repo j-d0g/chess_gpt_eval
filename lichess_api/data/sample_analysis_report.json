@@ -1,0 +1,14 @@
+{
+  "total_puzzles": 100000,
+  "sampled_puzzles": 10000,
+  "remaining_puzzles": 68626,
+  "sampling_method": "sorted_selection",
+  "is_deterministic": true,
+  "sample_indices_min": 18,
+  "sample_indices_max": 99993,
+  "indices_sorted": true,
+  "indices_sequential": false,
+  "sample_quality_mean": 0.7877525639225084,
+  "remaining_quality_mean": 0.7867121314890382,
+  "quality_based_selection": true
+}
